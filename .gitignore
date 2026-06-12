@@ -37,3 +37,6 @@ paper/*.log
 # Secrets
 .env
 *.env
+
+# Internal live-status notes (kept out of the public artifact)
+/HANDOFF.md
