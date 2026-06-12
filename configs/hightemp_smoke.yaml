@@ -1,0 +1,74 @@
+# High-temperature SMOKE test (2026-06-09). Small-sample probe before committing to a full
+# high-T sweep. Question: the min-p / top-nσ papers validate at T=2–3; we capped the matrix at
+# T=1.3. Does the sampler choice start to matter at T=2/3, i.e. do min_p / top_n_sigma rescue a
+# robust model where plain temperature dies — and does Llama-3.1 stay dead?
+#
+# Design: 2 models (Llama-3.1 dying control + Gemma-3 robust subject), Q8 only (quant held
+# fixed), the 4 samplers that form the head-to-head, T=2.0 and T=3.0. Run with --limit for a
+# tiny item count. NOT the frozen matrix — separate output_dir so ids never collide.
+
+name: hightemp-smoke
+phase: hightemp_smoke
+output_dir: results/hightemp_smoke
+
+checkpoints:
+  - name: llama-3.1-8b-instruct
+    family: llama
+    params_b: 8.0
+    hf_repo: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
+    quant_files:
+      Q8_0: Meta-Llama-3.1-8B-Instruct-Q8_0.gguf
+
+  - name: gemma-3-12b-it
+    family: gemma3
+    params_b: 12.0
+    hf_repo: bartowski/google_gemma-3-12b-it-GGUF
+    quant_files:
+      Q8_0: google_gemma-3-12b-it-Q8_0.gguf
+
+quant_levels: [Q8_0]
+
+# The head-to-head: plain temperature (the thing that should break) vs the two method-defining
+# tail-truncation samplers that claim to rescue high-T (min_p, top_n_sigma), plus top_p as the
+# classic baseline they compare against. Same recommended values as the frozen matrix.
+samplers:
+  - method: temperature
+  - method: top_p
+    top_p: 0.95
+  - method: min_p
+    min_p: 0.05
+  - method: top_n_sigma
+    top_n_sigma: 1.0
+
+# The regime those papers live in (matrix capped at 1.3; T=1.3 already exists for comparison).
+temperatures: [2.0, 3.0]
+
+tasks:
+  - name: gsm8k
+    hf_dataset: openai/gsm8k
+    hf_config: main
+    revision: main
+    split: test
+    subset_size: 50
+    max_new_tokens: 512
+    parser: gsm8k_numeric
+
+  - name: mmlu_pro
+    hf_dataset: TIGER-Lab/MMLU-Pro
+    revision: main
+    split: test
+    subset_size: 50
+    max_new_tokens: 1024
+    parser: mmlu_pro_letter
+
+generation:
+  global_seed: 0
+  repetitions: 3
+
+server:
+  host: 127.0.0.1
+  port: 8080
+  llama_cpp_commit: 5aba5364d959756c43eccc45596731e7b4eb3aa4
+  n_ctx: 16384
+  n_gpu_layers: -1
+  parallel: 8

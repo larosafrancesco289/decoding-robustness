@@ -1,0 +1,5 @@
+# Llama de-risk gate, 2080 Ti-safe quants (Q6/Q4/Q3 fit 11GB at n_ctx=16384/parallel=8).
+# Q8 is routed to the A6000 (cells_gate_a6000.txt) — 8.5GB weights + 2GB KV OOMs an 11GB card.
+llama-3.1-8b-instruct Q6_K
+llama-3.1-8b-instruct Q4_K_M
+llama-3.1-8b-instruct Q3_K_M

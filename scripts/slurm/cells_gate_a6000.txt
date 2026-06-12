@@ -1,0 +1,2 @@
+# Llama de-risk gate, VRAM-heavy quant: Q8_0 (8.5GB) routed to a 48GB A6000.
+llama-3.1-8b-instruct Q8_0

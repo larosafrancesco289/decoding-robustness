@@ -1,0 +1,16 @@
+# model                       quant    [parallel]   -- cells that fit an 11GB RTX 2080 Ti
+# (weights <= ~6.7GB; + ~2GB KV at n_ctx=16384/parallel=8 + buffers). One per array task.
+mistral-7b-instruct-v0.3 Q6_K
+mistral-7b-instruct-v0.3 Q4_K_M
+mistral-7b-instruct-v0.3 Q3_K_M
+qwen3-8b Q6_K
+qwen3-8b Q4_K_M
+qwen3-8b Q3_K_M
+qwen3-4b Q8_0
+qwen3-4b Q6_K
+qwen3-4b Q4_K_M
+qwen3-4b Q3_K_M
+qwen3-1.7b Q8_0
+qwen3-1.7b Q6_K
+qwen3-1.7b Q4_K_M
+qwen3-1.7b Q3_K_M

@@ -1,0 +1,72 @@
+# Qwen3-8B thinking-ON FULL cell (added 2026-06-04). NOT part of the frozen matrix.
+# Upgrades the N=25 spot-check to a fully-powered cell: same sampler grid + N=50/K=3 +
+# temps as the matrix, so thinking-ON is directly comparable to the frozen thinking-OFF
+# qwen3-8b Q8 cell. Confirms the temperature-robustness isn't a thinking-OFF artifact.
+# Run: run_pilot.py --config configs/qwen3_thinking_full.yaml --enable-thinking
+#   --model-dir models --out results/thinking_full/qwen3-8b-thinkON__Q8_0.jsonl
+name: qwen3-thinking-full
+phase: thinking_full
+output_dir: results/thinking_full
+
+checkpoints:
+  - name: qwen3-8b
+    family: qwen3
+    params_b: 8.2
+    hf_repo: bartowski/Qwen_Qwen3-8B-GGUF
+    quant_files:
+      Q8_0: Qwen_Qwen3-8B-Q8_0.gguf
+
+quant_levels: [Q8_0]
+
+# Same decoding grid as the frozen matrix (full_matrix.yaml).
+samplers:
+  - method: greedy
+  - method: temperature
+  - method: top_p
+    top_p: 0.95
+  - method: top_k
+    top_k: 40
+  - method: min_p
+    min_p: 0.05
+  - method: top_n_sigma
+    top_n_sigma: 1.0
+  - method: min_p
+    min_p: 0.05
+    chain: [min_p, temperature]
+  - method: top_p
+    top_p: 0.95
+    chain: [top_p, temperature]
+
+temperatures: [0.7, 1.0, 1.3]
+
+# Bigger max_new_tokens than the matrix (512/1024): thinking traces are long. Per-slot budget
+# n_ctx/parallel = 20480/4 = 5120 must exceed prompt (~800) + max_new_tokens (3072).
+tasks:
+  - name: gsm8k
+    hf_dataset: openai/gsm8k
+    hf_config: main
+    revision: main
+    split: test
+    subset_size: 50
+    max_new_tokens: 3072
+    parser: gsm8k_numeric
+
+  - name: mmlu_pro
+    hf_dataset: TIGER-Lab/MMLU-Pro
+    revision: main
+    split: test
+    subset_size: 50
+    max_new_tokens: 3072
+    parser: mmlu_pro_letter
+
+generation:
+  global_seed: 0
+  repetitions: 3
+
+server:
+  host: 127.0.0.1
+  port: 8080
+  llama_cpp_commit: 5aba5364d959756c43eccc45596731e7b4eb3aa4
+  n_ctx: 20480
+  n_gpu_layers: -1
+  parallel: 4

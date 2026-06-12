@@ -1,0 +1,5 @@
+# model                       quant    [parallel]   -- VRAM-heavy cells routed to a 48GB
+# RTX A6000 (weights >= ~7.5GB; too tight on an 11GB 2080 Ti at parallel=8 / n_ctx=16384).
+mistral-7b-instruct-v0.3 Q8_0
+qwen3-8b Q8_0
+qwen3-4b BF16

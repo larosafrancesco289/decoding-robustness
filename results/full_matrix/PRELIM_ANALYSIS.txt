@@ -1,0 +1,212 @@
+
+Loaded 134,400 records across 5 models.
+
+==============================================================================
+TASK: gsm8k
+==============================================================================
+
+[1] Greedy baseline (T=0) accuracy -- model x quant
+  model                         BF16    Q8_0    Q6_K  Q4_K_M  Q3_K_M
+  llama-3.1-8b-instruct           -      76%     78%     76%     82%
+  mistral-7b-instruct-v0.3        -      28%     30%     36%     30%
+  qwen3-8b                        -      96%     96%     96%     90%
+  qwen3-4b                       96%     98%     98%     92%     92%
+  qwen3-1.7b                      -      80%     80%     76%     66%
+
+[2] Sampler x temperature (pooled over quant) -- accuracy
+
+  llama-3.1-8b-instruct
+    sampler             T0.7    T1.0    T1.3
+    temperature          78%     75%     44%
+    top_k                80%     75%     59%
+    top_p                82%     78%     64%
+    min_p                81%     78%     72%
+    top_n_sigma          79%     81%     81%
+    top_p (tlast)        81%     79%     73%
+    min_p (tlast)        79%     81%     76%
+
+  mistral-7b-instruct-v0.3
+    sampler             T0.7    T1.0    T1.3
+    temperature          33%     30%     29%
+    top_k                32%     32%     30%
+    top_p                28%     31%     34%
+    min_p                32%     28%     29%
+    top_n_sigma          30%     31%     30%
+    top_p (tlast)        30%     31%     30%
+    min_p (tlast)        30%     32%     30%
+
+  qwen3-8b
+    sampler             T0.7    T1.0    T1.3
+    temperature          95%     94%     94%
+    top_k                95%     95%     94%
+    top_p                94%     94%     94%
+    min_p                95%     95%     95%
+    top_n_sigma          96%     94%     94%
+    top_p (tlast)        94%     94%     94%
+    min_p (tlast)        96%     95%     95%
+
+  qwen3-4b
+    sampler             T0.7    T1.0    T1.3
+    temperature          95%     94%     93%
+    top_k                94%     95%     94%
+    top_p                95%     95%     93%
+    min_p                95%     95%     93%
+    top_n_sigma          95%     94%     94%
+    top_p (tlast)        95%     95%     94%
+    min_p (tlast)        95%     94%     94%
+
+  qwen3-1.7b
+    sampler             T0.7    T1.0    T1.3
+    temperature          73%     74%     74%
+    top_k                73%     73%     73%
+    top_p                74%     75%     73%
+    min_p                72%     72%     74%
+    top_n_sigma          74%     74%     72%
+    top_p (tlast)        73%     72%     71%
+    min_p (tlast)        75%     73%     74%
+
+[3] Temp-robustness: accuracy drop T0.7 -> T1.3 (pooled over quant)
+    smaller drop = more robust; ranked most-robust first
+    llama-3.1-8b-instruct: top_n_sigma -2pp, min_p (tlast) +2pp, top_p (tlast) +8pp, min_p +9pp, top_p +18pp, top_k +21pp, temperature +34pp
+    mistral-7b-instruct-v0.3: top_p -6pp, min_p (tlast) -1pp, top_n_sigma -1pp, top_p (tlast) +0pp, top_k +2pp, temperature +3pp, min_p +3pp
+    qwen3-8b: top_p (tlast) -0pp, min_p +0pp, top_p +0pp, temperature +1pp, min_p (tlast) +1pp, top_k +1pp, top_n_sigma +2pp
+    qwen3-4b: top_k -0pp, top_p (tlast) +1pp, min_p (tlast) +1pp, top_n_sigma +1pp, top_p +2pp, temperature +2pp, min_p +2pp
+    qwen3-1.7b: min_p -2pp, top_k -0pp, temperature -0pp, min_p (tlast) +0pp, top_p +1pp, top_p (tlast) +2pp, top_n_sigma +2pp
+
+[4] Per-quant stability of the robustness ranking (Spearman rho vs pooled)
+    llama-3.1-8b-instruct: Q8_0:+0.96  Q6_K:+1.00  Q4_K_M:+0.96  Q3_K_M:+0.99
+    mistral-7b-instruct-v0.3: Q8_0:+0.23  Q6_K:+0.88  Q4_K_M:+0.94  Q3_K_M:+0.25
+    qwen3-8b: Q8_0:+0.00  Q6_K:+0.62  Q4_K_M:+0.84  Q3_K_M:+0.29
+    qwen3-4b: BF16:+0.29  Q8_0:+0.06  Q6_K:+0.47  Q4_K_M:+0.50  Q3_K_M:+0.47
+    qwen3-1.7b: Q8_0:-0.18  Q6_K:+0.27  Q4_K_M:-0.18  Q3_K_M:+0.95
+==============================================================================
+TASK: mmlu_pro
+==============================================================================
+
+[1] Greedy baseline (T=0) accuracy -- model x quant
+  model                         BF16    Q8_0    Q6_K  Q4_K_M  Q3_K_M
+  llama-3.1-8b-instruct           -      50%     58%     56%     52%
+  mistral-7b-instruct-v0.3        -      40%     34%     32%     36%
+  qwen3-8b                        -      62%     58%     64%     58%
+  qwen3-4b                       62%     66%     62%     60%     58%
+  qwen3-1.7b                      -      50%     42%     44%     46%
+
+[2] Sampler x temperature (pooled over quant) -- accuracy
+
+  llama-3.1-8b-instruct
+    sampler             T0.7    T1.0    T1.3
+    temperature          48%     40%      7%
+    top_k                51%     43%     27%
+    top_p                51%     46%     16%
+    min_p                51%     51%     40%
+    top_n_sigma          51%     50%     49%
+    top_p (tlast)        50%     47%     38%
+    min_p (tlast)        51%     50%     44%
+
+  mistral-7b-instruct-v0.3
+    sampler             T0.7    T1.0    T1.3
+    temperature          30%     30%     22%
+    top_k                32%     32%     28%
+    top_p                30%     30%     25%
+    min_p                34%     31%     31%
+    top_n_sigma          32%     32%     32%
+    top_p (tlast)        29%     30%     32%
+    min_p (tlast)        33%     33%     29%
+
+  qwen3-8b
+    sampler             T0.7    T1.0    T1.3
+    temperature          60%     59%     60%
+    top_k                60%     61%     57%
+    top_p                60%     61%     60%
+    min_p                61%     59%     60%
+    top_n_sigma          60%     59%     59%
+    top_p (tlast)        61%     60%     60%
+    min_p (tlast)        61%     61%     59%
+
+  qwen3-4b
+    sampler             T0.7    T1.0    T1.3
+    temperature          62%     63%     61%
+    top_k                63%     61%     61%
+    top_p                63%     61%     63%
+    min_p                61%     63%     63%
+    top_n_sigma          62%     62%     61%
+    top_p (tlast)        63%     63%     62%
+    min_p (tlast)        61%     64%     61%
+
+  qwen3-1.7b
+    sampler             T0.7    T1.0    T1.3
+    temperature          46%     46%     45%
+    top_k                48%     46%     45%
+    top_p                47%     47%     47%
+    min_p                47%     48%     46%
+    top_n_sigma          47%     47%     46%
+    top_p (tlast)        48%     47%     44%
+    min_p (tlast)        46%     46%     49%
+
+[3] Temp-robustness: accuracy drop T0.7 -> T1.3 (pooled over quant)
+    smaller drop = more robust; ranked most-robust first
+    llama-3.1-8b-instruct: top_n_sigma +2pp, min_p (tlast) +8pp, min_p +12pp, top_p (tlast) +13pp, top_k +24pp, top_p +35pp, temperature +41pp
+    mistral-7b-instruct-v0.3: top_p (tlast) -3pp, top_n_sigma +1pp, min_p +3pp, top_k +4pp, min_p (tlast) +4pp, top_p +5pp, temperature +8pp
+    qwen3-8b: top_p +0pp, top_p (tlast) +0pp, temperature +1pp, min_p +1pp, top_n_sigma +1pp, min_p (tlast) +2pp, top_k +3pp
+    qwen3-4b: min_p -2pp, min_p (tlast) -0pp, top_p +0pp, temperature +1pp, top_n_sigma +1pp, top_p (tlast) +1pp, top_k +2pp
+    qwen3-1.7b: min_p (tlast) -3pp, top_p +0pp, top_n_sigma +1pp, temperature +1pp, min_p +1pp, top_k +2pp, top_p (tlast) +4pp
+
+[4] Per-quant stability of the robustness ranking (Spearman rho vs pooled)
+    llama-3.1-8b-instruct: Q8_0:+0.96  Q6_K:+0.96  Q4_K_M:+0.93  Q3_K_M:+1.00
+    mistral-7b-instruct-v0.3: Q8_0:+0.82  Q6_K:+0.76  Q4_K_M:+0.93  Q3_K_M:+0.68
+    qwen3-8b: Q8_0:-0.10  Q6_K:+0.70  Q4_K_M:+0.49  Q3_K_M:+0.25
+    qwen3-4b: BF16:+0.75  Q8_0:+0.71  Q6_K:-0.32  Q4_K_M:+0.82  Q3_K_M:+0.15
+    qwen3-1.7b: Q8_0:+0.41  Q6_K:+0.82  Q4_K_M:+0.36  Q3_K_M:+0.36
+
+==============================================================================
+[5] Quant effect on greedy accuracy: Q8_0 -> Q3_K_M (pooled over both tasks)
+==============================================================================
+  llama-3.1-8b-instruct      Q8=  63%  Q3=  67%  delta=+4.0pp
+  mistral-7b-instruct-v0.3   Q8=  34%  Q3=  33%  delta=-1.0pp
+  qwen3-8b                   Q8=  79%  Q3=  74%  delta=-5.0pp
+  qwen3-4b                   Q8=  82%  Q3=  75%  delta=-7.0pp
+  qwen3-1.7b                 Q8=  65%  Q3=  56%  delta=-9.0pp
+
+==============================================================================
+[6] Temp-FIRST vs temp-LAST at T=1.3 (pooled quant) -- the min-p critique ablation
+==============================================================================
+
+  gsm8k
+    llama-3.1-8b-instruct      top_p: first   64% / last   73% (+9pp) | min_p: first   72% / last   76% (+4pp)
+    mistral-7b-instruct-v0.3   top_p: first   34% / last   30% (-5pp) | min_p: first   29% / last   30% (+2pp)
+    qwen3-8b                   top_p: first   94% / last   94% (+0pp) | min_p: first   95% / last   95% (+1pp)
+    qwen3-4b                   top_p: first   93% / last   94% (+1pp) | min_p: first   93% / last   94% (+1pp)
+    qwen3-1.7b                 top_p: first   73% / last   71% (-1pp) | min_p: first   74% / last   74% (+1pp)
+
+  mmlu_pro
+    llama-3.1-8b-instruct      top_p: first   16% / last   38% (+22pp) | min_p: first   40% / last   44% (+4pp)
+    mistral-7b-instruct-v0.3   top_p: first   25% / last   32% (+7pp) | min_p: first   31% / last   29% (-2pp)
+    qwen3-8b                   top_p: first   60% / last   60% (+0pp) | min_p: first   60% / last   59% (-0pp)
+    qwen3-4b                   top_p: first   63% / last   62% (-1pp) | min_p: first   63% / last   61% (-1pp)
+    qwen3-1.7b                 top_p: first   47% / last   44% (-4pp) | min_p: first   46% / last   49% (+3pp)
+
+==============================================================================
+[7] Parse-failure rate (parse_method == 'failed')
+==============================================================================
+
+  by model x task:
+    llama-3.1-8b-instruct      gsm8k        0.0%  (n=12800)
+    llama-3.1-8b-instruct      mmlu_pro    23.9%  (n=12800)
+    mistral-7b-instruct-v0.3   gsm8k        0.1%  (n=12800)
+    mistral-7b-instruct-v0.3   mmlu_pro    14.5%  (n=12800)
+    qwen3-8b                   gsm8k        0.0%  (n=12800)
+    qwen3-8b                   mmlu_pro    16.4%  (n=12800)
+    qwen3-4b                   gsm8k        0.0%  (n=16000)
+    qwen3-4b                   mmlu_pro    11.7%  (n=16000)
+    qwen3-1.7b                 gsm8k        0.0%  (n=12800)
+    qwen3-1.7b                 mmlu_pro    13.9%  (n=12800)
+
+  by sampler x temp (pooled models/tasks):
+    temperature         6.9%    8.8%   14.3%
+    top_k               6.4%    7.2%    9.6%
+    top_p               6.6%    7.5%   12.9%
+    min_p               6.7%    6.7%    8.1%
+    top_n_sigma         6.8%    7.1%    7.4%
+    top_p (tlast)       6.8%    7.1%    8.9%
+    min_p (tlast)       6.8%    7.0%    7.6%
+    greedy              6.5%

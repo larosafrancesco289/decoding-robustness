@@ -1,0 +1,46 @@
+# aria2c input list — Qwen3 family for M4 (DOWNLOADS.md Priority 2 & 3).
+# Order: 8B (Q4/Q8 anchors first) -> 4B (+bf16 anchor) -> 1.7B.
+# Each entry points at the HF *resolve* URL (not the signed CDN URL) so aria2c
+# re-resolves a fresh signature on every reconnect -> survives WiFi drops + the
+# 1-hour signed-link expiry. Run with:
+#   aria2c -i scripts/qwen3_downloads.txt -d models -j1 -x8 -s8 -c \
+#          --max-tries=0 --retry-wait=10 --conditional-get=true
+# -j1 = one file at a time (sequential); -x8 -s8 = 8 connections within a file.
+
+# --- Mistral-7B-v0.3 Q8_0 (bartowski/Mistral-7B-Instruct-v0.3-GGUF) ---
+# Recovery: Brave lost its in-progress copy overnight (no .crdownload survived).
+# Fetched fresh via aria2c first since it's a needed M4 anchor. ~7.7 GB.
+https://huggingface.co/bartowski/Mistral-7B-Instruct-v0.3-GGUF/resolve/main/Mistral-7B-Instruct-v0.3-Q8_0.gguf?download=true
+  out=Mistral-7B-Instruct-v0.3-Q8_0.gguf
+
+# --- Qwen3-8B (bartowski/Qwen_Qwen3-8B-GGUF) ---
+https://huggingface.co/bartowski/Qwen_Qwen3-8B-GGUF/resolve/main/Qwen_Qwen3-8B-Q4_K_M.gguf?download=true
+  out=Qwen_Qwen3-8B-Q4_K_M.gguf
+https://huggingface.co/bartowski/Qwen_Qwen3-8B-GGUF/resolve/main/Qwen_Qwen3-8B-Q8_0.gguf?download=true
+  out=Qwen_Qwen3-8B-Q8_0.gguf
+https://huggingface.co/bartowski/Qwen_Qwen3-8B-GGUF/resolve/main/Qwen_Qwen3-8B-Q6_K.gguf?download=true
+  out=Qwen_Qwen3-8B-Q6_K.gguf
+https://huggingface.co/bartowski/Qwen_Qwen3-8B-GGUF/resolve/main/Qwen_Qwen3-8B-Q3_K_M.gguf?download=true
+  out=Qwen_Qwen3-8B-Q3_K_M.gguf
+
+# --- Qwen3-4B (bartowski/Qwen_Qwen3-4B-GGUF) — includes the bf16 anchor ---
+https://huggingface.co/bartowski/Qwen_Qwen3-4B-GGUF/resolve/main/Qwen_Qwen3-4B-Q4_K_M.gguf?download=true
+  out=Qwen_Qwen3-4B-Q4_K_M.gguf
+https://huggingface.co/bartowski/Qwen_Qwen3-4B-GGUF/resolve/main/Qwen_Qwen3-4B-bf16.gguf?download=true
+  out=Qwen_Qwen3-4B-bf16.gguf
+https://huggingface.co/bartowski/Qwen_Qwen3-4B-GGUF/resolve/main/Qwen_Qwen3-4B-Q8_0.gguf?download=true
+  out=Qwen_Qwen3-4B-Q8_0.gguf
+https://huggingface.co/bartowski/Qwen_Qwen3-4B-GGUF/resolve/main/Qwen_Qwen3-4B-Q6_K.gguf?download=true
+  out=Qwen_Qwen3-4B-Q6_K.gguf
+https://huggingface.co/bartowski/Qwen_Qwen3-4B-GGUF/resolve/main/Qwen_Qwen3-4B-Q3_K_M.gguf?download=true
+  out=Qwen_Qwen3-4B-Q3_K_M.gguf
+
+# --- Qwen3-1.7B (bartowski/Qwen_Qwen3-1.7B-GGUF) ---
+https://huggingface.co/bartowski/Qwen_Qwen3-1.7B-GGUF/resolve/main/Qwen_Qwen3-1.7B-Q4_K_M.gguf?download=true
+  out=Qwen_Qwen3-1.7B-Q4_K_M.gguf
+https://huggingface.co/bartowski/Qwen_Qwen3-1.7B-GGUF/resolve/main/Qwen_Qwen3-1.7B-Q8_0.gguf?download=true
+  out=Qwen_Qwen3-1.7B-Q8_0.gguf
+https://huggingface.co/bartowski/Qwen_Qwen3-1.7B-GGUF/resolve/main/Qwen_Qwen3-1.7B-Q6_K.gguf?download=true
+  out=Qwen_Qwen3-1.7B-Q6_K.gguf
+https://huggingface.co/bartowski/Qwen_Qwen3-1.7B-GGUF/resolve/main/Qwen_Qwen3-1.7B-Q3_K_M.gguf?download=true
+  out=Qwen_Qwen3-1.7B-Q3_K_M.gguf

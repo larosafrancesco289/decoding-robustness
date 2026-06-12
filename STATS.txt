@@ -1,0 +1,79 @@
+Clustered bootstrap (B=2000, resample items). Pooled over quant unless noted.
+
+================================================================================
+TASK: gsm8k
+================================================================================
+
+[A] Pure-temperature collapse: accuracy drop T0.7 -> T1.3 (95% CI)
+    positive = accuracy fell; CI excluding 0 = real collapse
+    llama-3.1-8b-instruct      +34.0pp  [+28.5, +39.7]  <-- collapse
+    mistral-7b-instruct-v0.3   +3.5pp  [-1.3, +8.2]  (null: CI spans 0)
+    gemma-3-12b-it             +2.0pp  [-0.0, +4.8]  (null: CI spans 0)
+    qwen2.5-7b-instruct        +4.0pp  [+1.2, +7.3]
+    qwen3-8b                   +0.5pp  [-1.0, +2.2]  (null: CI spans 0)
+    qwen3-4b                   +2.1pp  [+0.5, +4.0]
+    qwen3-1.7b                 -0.3pp  [-3.5, +3.0]  (null: CI spans 0)
+
+[B] Sampler spread at T=1.3: max-min accuracy across 7 samplers (95% CI)
+    small = sampler choice barely matters
+    llama-3.1-8b-instruct      36.7pp  [30.3, 43.2]
+    mistral-7b-instruct-v0.3    5.3pp  [3.7, 10.5]
+    gemma-3-12b-it              3.3pp  [1.3, 6.7]
+    qwen2.5-7b-instruct         3.8pp  [2.3, 6.8]
+    qwen3-8b                    1.8pp  [1.0, 4.7]
+    qwen3-4b                    1.3pp  [0.8, 3.6]
+    qwen3-1.7b                  3.2pp  [2.2, 7.0]
+
+[C] Self-consistency under pure temperature @T=1.3: mean distinct answers/item
+    1.0 = all reps agree (robust); ->K = reps disagree (temp injecting errors)
+    llama-3.1-8b-instruct      2.33   [2.14, 2.50]
+    mistral-7b-instruct-v0.3   2.48   [2.34, 2.62]
+    gemma-3-12b-it             1.16   [1.06, 1.27]
+    qwen2.5-7b-instruct        1.27   [1.16, 1.41]
+    qwen3-8b                   1.13   [1.04, 1.24]
+    qwen3-4b                   1.14   [1.07, 1.22]
+    qwen3-1.7b                 1.43   [1.31, 1.56]
+================================================================================
+TASK: mmlu_pro
+================================================================================
+
+[A] Pure-temperature collapse: accuracy drop T0.7 -> T1.3 (95% CI)
+    positive = accuracy fell; CI excluding 0 = real collapse
+    llama-3.1-8b-instruct      +40.8pp  [+31.8, +50.3]  <-- collapse
+    mistral-7b-instruct-v0.3   +8.0pp  [+3.5, +13.2]
+    gemma-3-12b-it             +3.7pp  [+0.2, +7.7]
+    qwen2.5-7b-instruct        +4.8pp  [+1.3, +8.8]
+    qwen3-8b                   +1.0pp  [-3.0, +4.8]  (null: CI spans 0)
+    qwen3-4b                   +0.7pp  [-1.2, +2.5]  (null: CI spans 0)
+    qwen3-1.7b                 +0.7pp  [-3.8, +4.8]  (null: CI spans 0)
+
+[B] Sampler spread at T=1.3: max-min accuracy across 7 samplers (95% CI)
+    small = sampler choice barely matters
+    llama-3.1-8b-instruct      41.8pp  [32.0, 52.5]
+    mistral-7b-instruct-v0.3   10.0pp  [6.3, 15.2]
+    gemma-3-12b-it              5.8pp  [3.3, 10.0]
+    qwen2.5-7b-instruct         5.7pp  [4.0, 10.0]
+    qwen3-8b                    3.5pp  [2.3, 6.8]
+    qwen3-4b                    1.7pp  [1.3, 5.9]
+    qwen3-1.7b                  5.5pp  [3.2, 9.8]
+
+[C] Self-consistency under pure temperature @T=1.3: mean distinct answers/item
+    1.0 = all reps agree (robust); ->K = reps disagree (temp injecting errors)
+    llama-3.1-8b-instruct      1.28   [1.19, 1.39]
+    mistral-7b-instruct-v0.3   2.21   [2.06, 2.35]
+    gemma-3-12b-it             1.45   [1.31, 1.58]
+    qwen2.5-7b-instruct        1.57   [1.41, 1.73]
+    qwen3-8b                   1.40   [1.28, 1.52]
+    qwen3-4b                   1.38   [1.26, 1.50]
+    qwen3-1.7b                 1.73   [1.58, 1.88]
+
+================================================================================
+[D] Quant effect: greedy accuracy drop Q8_0 -> Q3_K_M (95% CI), pooled tasks
+================================================================================
+    llama-3.1-8b-instruct      -4.0pp  [-11.0, +3.0]
+    mistral-7b-instruct-v0.3   +1.0pp  [-7.0, +9.0]
+    gemma-3-12b-it             -3.0pp  [-9.0, +3.0]
+    qwen2.5-7b-instruct        -1.0pp  [-7.0, +4.0]
+    qwen3-8b                   +5.0pp  [-1.0, +12.0]
+    qwen3-4b                   +7.0pp  [+1.0, +13.0]
+    qwen3-1.7b                 +9.0pp  [+0.0, +18.0]

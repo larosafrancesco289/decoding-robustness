@@ -1,0 +1,66 @@
+# MMLU-Pro stratified-subset validation (2026-06-10). The frozen matrix's head-of-split
+# N=50 turned out to be 100% "business" (the test split is sorted by category — found in
+# the shard audit). Within-matrix contrasts are unaffected (same items everywhere), but
+# this run checks the HEADLINE pattern on a category-stratified N=50 (3-4 items from each
+# of the 14 categories, deterministic round-robin pick): if the pure-temperature collapse
+# ordering (Llama >> Qwen2.5/Gemma) reproduces, the single-category subset is not driving it.
+#
+# Cheap by design: Q8 only, greedy + pure temperature only (the collapse axis; sampler
+# spread is not re-tested here). Separate output_dir; ids share the matrix id space
+# (original row indices) but never mix files.
+
+name: mmlu-strat-check
+phase: mmlu_strat_check
+output_dir: results/mmlu_strat_check
+
+checkpoints:
+  - name: llama-3.1-8b-instruct
+    family: llama
+    params_b: 8.0
+    hf_repo: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
+    quant_files:
+      Q8_0: Meta-Llama-3.1-8B-Instruct-Q8_0.gguf
+
+  - name: qwen2.5-7b-instruct
+    family: qwen2.5
+    params_b: 7.6
+    hf_repo: bartowski/Qwen2.5-7B-Instruct-GGUF
+    quant_files:
+      Q8_0: Qwen2.5-7B-Instruct-Q8_0.gguf
+
+  - name: gemma-3-12b-it
+    family: gemma3
+    params_b: 12.0
+    hf_repo: bartowski/google_gemma-3-12b-it-GGUF
+    quant_files:
+      Q8_0: google_gemma-3-12b-it-Q8_0.gguf
+
+quant_levels: [Q8_0]
+
+samplers:
+  - method: greedy
+  - method: temperature
+
+temperatures: [0.7, 1.0, 1.3]
+
+tasks:
+  - name: mmlu_pro
+    hf_dataset: TIGER-Lab/MMLU-Pro
+    revision: main
+    split: test
+    subset_size: 50
+    subset_strategy: stratified_category
+    max_new_tokens: 1024
+    parser: mmlu_pro_letter
+
+generation:
+  global_seed: 0
+  repetitions: 3
+
+server:
+  host: 127.0.0.1
+  port: 8080
+  llama_cpp_commit: 5aba5364d959756c43eccc45596731e7b4eb3aa4
+  n_ctx: 16384
+  n_gpu_layers: -1
+  parallel: 8
