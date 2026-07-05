@@ -302,7 +302,7 @@ def fig5_quant(quant_greedy):
         if a8 and a3:
             d, lo, hi = boot_drop(a8, a3)
             rows.append((m, d * 100, lo * 100, hi * 100))
-    forest(ax, rows, "greedy drop Q8\\_0 $\\to$ Q3\\_K\\_M (pp)",
+    forest(ax, rows, "greedy drop Q8_0 $\\to$ Q3_K_M (pp)",
            highlight=lambda m: m == "qwen3-1.7b")
     save(fig, "fig5_quant")
 

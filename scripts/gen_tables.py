@@ -12,6 +12,7 @@ Tables:
   tab_selfcons.tex                            self-consistency, distinct answers/item (App. G)
   tab_recovery.tex                            terminated-length censoring (App. B)
   tab_mechanism.tex                           probe + escape + perturbation per model (App. H)
+  tab_lineage.tex                             Llama lineage cell vs Q8 Llama-3.1 (App. D)
 
 Pure stdlib. Accuracies pooled over quant unless stated. Booktabs format, \\input-able.
 """
@@ -40,7 +41,8 @@ MODELS = ["llama-3.1-8b-instruct", "mistral-7b-instruct-v0.3", "qwen2.5-7b-instr
           "gemma-3-12b-it", "qwen3-1.7b", "qwen3-4b", "qwen3-8b"]
 SHORT = {"llama-3.1-8b-instruct": "Llama-3.1-8B", "mistral-7b-instruct-v0.3": "Mistral-7B",
          "qwen2.5-7b-instruct": "Qwen2.5-7B", "gemma-3-12b-it": "Gemma-3-12B",
-         "qwen3-1.7b": "Qwen3-1.7B", "qwen3-4b": "Qwen3-4B", "qwen3-8b": "Qwen3-8B"}
+         "qwen3-1.7b": "Qwen3-1.7B", "qwen3-4b": "Qwen3-4B", "qwen3-8b": "Qwen3-8B",
+         "llama-3-8b-instruct": "Llama-3-8B", "llama-3.2-3b-instruct": "Llama-3.2-3B"}
 TASKS = ["gsm8k", "mmlu_pro"]
 TASK_NAME = {"gsm8k": "GSM8K", "mmlu_pro": "MMLU-Pro"}
 TEMPS = [0.7, 1.0, 1.3]
@@ -70,6 +72,7 @@ def pct(x, nd=1):
 # ------------------------------------------------------------------ load matrix
 cells = defaultdict(lambda: [0, 0])      # (model,task,sampler,temp) -> [n_correct, n]
 cells_q8 = defaultdict(lambda: [0, 0])   # same, Q8_0 only (for the strat comparison)
+lin31 = defaultdict(lambda: defaultdict(list))  # (task,T) -> item -> [correct]; Q8 Llama-3.1
 decomp = defaultdict(lambda: defaultdict(int))  # same key -> counters
 ans = defaultdict(lambda: defaultdict(list))    # selfcons: (m,task,T)->(item,quant)->[ans]
 term_lens = defaultdict(list)            # (model,task,temp) -> terminated completion lengths
@@ -81,6 +84,8 @@ for r in load("results/full_matrix/shards/*.jsonl"):
     if r["quant"] == "Q8_0":
         cells_q8[key][0] += int(r["correct"])
         cells_q8[key][1] += 1
+        if r["model"] == "llama-3.1-8b-instruct" and lab == "temperature":
+            lin31[(r["task"], r["temperature"])][r["item_id"]].append(int(r["correct"]))
     if lab == "temperature":
         d = decomp[key]
         d["n"] += 1
@@ -157,13 +162,14 @@ for r in load("results/mmlu_strat_check/*.jsonl"):
     strat[(r["model"], lab, r["temperature"])][1] += 1
 lines = [
     "\\begin{tabular}{llcccc}", "\\toprule",
-    "Model & Subset & $T{=}0.7$ & $T{=}1.0$ & $T{=}1.3$ & drop \\\\",
+    " & & \\multicolumn{3}{c}{$T$} & \\\\",
+    "Model & Subset & 0.7 & 1.0 & 1.3 & drop \\\\",
 ]
 for m in ["llama-3.1-8b-instruct", "qwen2.5-7b-instruct", "gemma-3-12b-it"]:
     lines.append("\\midrule")
     for name, get in (
         ("stratified", lambda t, m=m: strat[(m, "temperature", t)]),
-        ("business (head-50)", lambda t, m=m: cells_q8[(m, "mmlu_pro", "temperature", t)]),
+        ("head-50", lambda t, m=m: cells_q8[(m, "mmlu_pro", "temperature", t)]),
     ):
         vals = []
         for t in TEMPS:
@@ -251,7 +257,7 @@ def pctl(v, p):
 lines = [
     "\\begin{tabular}{llccccc}", "\\toprule",
     " & & \\multicolumn{2}{c}{at cap (\\%)} & \\multicolumn{2}{c}{p90 length} & \\\\",
-    "Model & Task & $T{=}0.7$ & $T{=}1.3$ & $T{=}0.7$ & $T{=}1.3$ & ratio \\\\",
+    "Model & Task & 0.7 & 1.3 & 0.7 & 1.3 & ratio \\\\",
 ]
 for m in MODELS:
     lines.append("\\midrule")
@@ -302,7 +308,7 @@ for (m, task, lab, t), (c, n) in cells.items():
         drop_t[(m, t)] = [c, n]
 lines = [
     "\\begin{tabular}{lcccccc}", "\\toprule",
-    "Model & $H_{lb}$ & flat\\% & esc@1.3 & $\\Delta$esc & $\\Delta H$ & drop (pp) \\\\",
+    "Model & $H_{lb}$ & flat\\% & esc & $\\Delta$esc & $\\Delta H$ & drop \\\\",
     "\\midrule",
 ]
 for m in MODELS:
@@ -318,5 +324,51 @@ for m in MODELS:
         f"{mean_(d['d_ent']):+.3f} & {drop:+.1f} \\\\")
 lines += ["\\bottomrule", "\\end{tabular}"]
 write("tab_mechanism.tex", lines)
+
+# ------------------------------------------------------------------ L: llama lineage cell
+import random  # noqa: E402
+
+
+def drop_ci(by7, by13, B=2000, seed=0):
+    """Paired item-clustered bootstrap of the T0.7 -> T1.3 accuracy drop, in pp."""
+    rng = random.Random(seed)
+    items = sorted(set(by7) & set(by13))
+    d = [100 * (sum(by7[i]) / len(by7[i]) - sum(by13[i]) / len(by13[i])) for i in items]
+    n = len(items)
+    boots = sorted(sum(d[rng.randrange(n)] for _ in range(n)) / n for _ in range(B))
+    return sum(d) / n, boots[int(0.025 * B)], boots[int(0.975 * B) - 1]
+
+
+def ci_num(x):
+    return f"$-{abs(x):.1f}$" if x < 0 else f"{x:.1f}"
+
+
+lin = defaultdict(lambda: defaultdict(list))  # (model,task,T) -> item -> [correct]
+for r in load("results/llama_lineage/lineage.jsonl"):
+    if SAMPLER_LABEL.get(r["sampler"], r["sampler"]) == "temperature":
+        lin[(r["model"], r["task"], r["temperature"])][r["item_id"]].append(int(r["correct"]))
+for (task, t), by in lin31.items():
+    lin[("llama-3.1-8b-instruct", task, t)] = by
+
+lines = [
+    "\\begin{tabular}{llccc}", "\\toprule",
+    " & & \\multicolumn{2}{c}{acc (\\%) at $T$} & \\\\",
+    "Model & Task & 0.7 & 1.3 & drop [95\\% CI] \\\\",
+]
+for m in ["llama-3-8b-instruct", "llama-3.1-8b-instruct", "llama-3.2-3b-instruct"]:
+    lines.append("\\midrule")
+    first = True
+    for task in TASKS:
+        accs = []
+        for t in (0.7, 1.3):
+            vals = [c for lst in lin[(m, task, t)].values() for c in lst]
+            accs.append(pct(sum(vals) / len(vals)))
+        d, lo, hi = drop_ci(lin[(m, task, 0.7)], lin[(m, task, 1.3)])
+        lines.append(
+            f"{SHORT[m] if first else ''} & {TASK_NAME[task]} & " + " & ".join(accs)
+            + f" & ${d:+.1f}$\\,[{ci_num(lo)},\\,{ci_num(hi)}] \\\\")
+        first = False
+lines += ["\\bottomrule", "\\end{tabular}"]
+write("tab_lineage.tex", lines)
 
 print("done.")

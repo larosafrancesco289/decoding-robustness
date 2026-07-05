@@ -41,3 +41,5 @@ paper/*.log
 # Internal live-status notes (kept out of the public artifact)
 /HANDOFF.md
 /PUBLISHING.md
+/SUBMIT.md
+/WRITING.md

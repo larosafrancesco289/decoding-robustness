@@ -1,0 +1,67 @@
+# Llama lineage check (2026-07-04). The paper's fragile class has n=1 (Llama-3.1-8B).
+# This cell runs the predecessor (Llama-3-8B, same size class) and the successor
+# (Llama-3.2-3B, nearest instruct text model in the 3.2 line) on the collapse axis only:
+# greedy + pure temperature, T ∈ {0.7, 1.0, 1.3}, Q8, both frozen N=50 tasks. Either
+# outcome is informative: fragility shared across the lineage -> a lineage property;
+# 3.0/3.2 robust -> 3.1 is checkpoint-specific. Reviewer-proofing for the
+# "you characterize one model" objection (Limitations already concedes it).
+#
+# Same shape as mmlu_strat_check.yaml; head-of-split subsets match the frozen matrix
+# so drops are comparable cell-for-cell with Table 1.
+
+name: llama-lineage
+phase: llama_lineage
+output_dir: results/llama_lineage
+
+checkpoints:
+  - name: llama-3-8b-instruct
+    family: llama
+    params_b: 8.0
+    hf_repo: bartowski/Meta-Llama-3-8B-Instruct-GGUF
+    quant_files:
+      Q8_0: Meta-Llama-3-8B-Instruct-Q8_0.gguf
+
+  - name: llama-3.2-3b-instruct
+    family: llama
+    params_b: 3.2
+    hf_repo: bartowski/Llama-3.2-3B-Instruct-GGUF
+    quant_files:
+      Q8_0: Llama-3.2-3B-Instruct-Q8_0.gguf
+
+quant_levels: [Q8_0]
+
+samplers:
+  - method: greedy
+  - method: temperature
+
+temperatures: [0.7, 1.0, 1.3]
+
+tasks:
+  - name: gsm8k
+    hf_dataset: openai/gsm8k
+    hf_config: main
+    revision: main
+    split: test
+    subset_size: 50
+    max_new_tokens: 512
+    parser: gsm8k_numeric
+
+  - name: mmlu_pro
+    hf_dataset: TIGER-Lab/MMLU-Pro
+    revision: main
+    split: test
+    subset_size: 50
+    max_new_tokens: 1024
+    parser: mmlu_pro_letter
+
+generation:
+  global_seed: 0
+  repetitions: 3
+
+server:
+  host: 127.0.0.1
+  port: 8080
+  llama_cpp_commit: 5aba5364d959756c43eccc45596731e7b4eb3aa4
+  n_ctx: 16384
+  n_gpu_layers: -1
+  parallel: 8
