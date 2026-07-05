@@ -10,6 +10,7 @@ Tables:
   tab_hightemp.tex                            T=2-3 probe (App. D)
   tab_tlast.tex                               temperature-first vs -last arms (App. E)
   tab_selfcons.tex                            self-consistency, distinct answers/item (App. G)
+  tab_quantdrop.tex                           plain-temp drop per quant level (App. quant)
   tab_recovery.tex                            terminated-length censoring (App. B)
   tab_mechanism.tex                           probe + escape + perturbation per model (App. H)
   tab_lineage.tex                             Llama lineage cell vs Q8 Llama-3.1 (App. D)
@@ -75,6 +76,7 @@ cells_q8 = defaultdict(lambda: [0, 0])   # same, Q8_0 only (for the strat compar
 lin31 = defaultdict(lambda: defaultdict(list))  # (task,T) -> item -> [correct]; Q8 Llama-3.1
 decomp = defaultdict(lambda: defaultdict(int))  # same key -> counters
 ans = defaultdict(lambda: defaultdict(list))    # selfcons: (m,task,T)->(item,quant)->[ans]
+qd = defaultdict(lambda: [0, 0])         # (model,task,quant,temp) -> [n_correct, n]; plain temp
 term_lens = defaultdict(list)            # (model,task,temp) -> terminated completion lengths
 for r in load("results/full_matrix/shards/*.jsonl"):
     lab = SAMPLER_LABEL.get(r["sampler"], r["sampler"])
@@ -87,6 +89,10 @@ for r in load("results/full_matrix/shards/*.jsonl"):
         if r["model"] == "llama-3.1-8b-instruct" and lab == "temperature":
             lin31[(r["task"], r["temperature"])][r["item_id"]].append(int(r["correct"]))
     if lab == "temperature":
+        if r["temperature"] in (0.7, 1.3):
+            k = (r["model"], r["task"], r["quant"], r["temperature"])
+            qd[k][0] += int(r["correct"])
+            qd[k][1] += 1
         d = decomp[key]
         d["n"] += 1
         d["acc"] += int(r["correct"])
@@ -247,6 +253,28 @@ for m in MODELS:
     lines.append(" & ".join(row) + " \\\\")
 lines += ["\\bottomrule", "\\end{tabular}"]
 write("tab_selfcons.tex", lines)
+
+# ------------------------------------------------------------------ quant drops
+QUANTS = ["Q8_0", "Q6_K", "Q4_K_M", "Q3_K_M"]
+lines = [
+    "\\begin{tabular}{lcccc}", "\\toprule",
+    "Model & Q8\\_0 & Q6\\_K & Q4\\_K\\_M & Q3\\_K\\_M \\\\",
+]
+for task in TASKS:
+    lines.append("\\midrule")
+    lines.append(f"\\multicolumn{{5}}{{l}}{{\\emph{{{TASK_NAME[task]}}}}} \\\\")
+    for m in MODELS:
+        row = [SHORT[m]]
+        for q in QUANTS:
+            a07, a13 = qd.get((m, task, q, 0.7)), qd.get((m, task, q, 1.3))
+            if a07 and a13:
+                d = 100 * (a07[0] / a07[1] - a13[0] / a13[1])
+                row.append(f"${d:+.1f}$")
+            else:
+                row.append("--")
+        lines.append(" & ".join(row) + " \\\\")
+lines += ["\\bottomrule", "\\end{tabular}"]
+write("tab_quantdrop.tex", lines)
 
 # ------------------------------------------------------------------ B2: length censoring
 def pctl(v, p):

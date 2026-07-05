@@ -209,6 +209,7 @@ def fig2_decomposition(by, acc_strict):
     fig, axes = plt.subplots(1, 2, figsize=(6.6, 2.9), sharey=True,
                              constrained_layout=True)
     for ax, task in zip(axes, TASKS, strict=True):
+        label_pos = []
         for m in show:
             overall = [acc(by[(m, task, "temperature", t)],
                            list(by[(m, task, "temperature", t)])) * 100 for t in temps]
@@ -220,7 +221,16 @@ def fig2_decomposition(by, acc_strict):
             ax.plot(temps, cond, "--s", color=palette[m], alpha=0.5, ms=3.2, lw=1.2)
             # direct label at the right end of the solid line (left panel only labels too)
             if task == "mmlu_pro":
-                ax.annotate(SHORT[m], (temps[-1], overall[-1]),
+                label_pos.append((m, overall[-1]))
+        # dodge direct labels: line endpoints can sit ~2pp apart (Gemma vs Qwen2.5)
+        if label_pos:
+            min_gap = 7.0
+            label_pos.sort(key=lambda t: t[1])
+            ys = [y for _, y in label_pos]
+            for i in range(1, len(ys)):
+                ys[i] = max(ys[i], ys[i - 1] + min_gap)
+            for (m, _), y in zip(label_pos, ys):
+                ax.annotate(SHORT[m], (temps[-1], y),
                             xytext=(5, 0), textcoords="offset points",
                             color=palette[m], fontsize=7.5, va="center")
         ax.set_title(TASK_NAME[task])
