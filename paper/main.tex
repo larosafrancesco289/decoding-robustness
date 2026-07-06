@@ -48,13 +48,12 @@ five families (1.7B to 12B parameters) through a factorial grid of 4 quantizatio
 generations, about 204{,}000 generations in total. At deployment temperatures ($T \le
 1.3$), sampler choice barely matters: outside one family, the per-model accuracy spread
 across samplers is 1.3 to 10.0 percentage points (pp), and even that overstates the true
-differences. The exception is the Llama family. Under plain temperature sampling at
+differences. The exception is the Llama family: under plain temperature sampling at
 $T{=}1.3$, Llama-3.1-8B loses 34\,pp (GSM8K) and 41\,pp (MMLU-Pro), Llama-3.2-3B
 collapses the same way, and Llama-3-8B loses 17\,pp on MMLU-Pro; every model outside the
 family stays within 8\,pp. The collapse is a termination failure: generations derail
 midway and never reach an answer, while accuracy conditional on producing a well-formed
-answer stays at the greedy level in every cell (97\% for Llama-3.1-8B on GSM8K at
-$T{=}1.3$). A temperature ladder up to $T{=}2.0$ locates each model's cliff and shows
+answer stays at the greedy level in every cell. A temperature ladder up to $T{=}2.0$ locates each model's cliff and shows
 that truncation samplers only begin to matter past it. A logit probe and a forced-token
 perturbation experiment trace the fragility to a self-reinforcing instability: one
 off-distribution token in context multiplies the fragile model's chance of drawing the
@@ -63,33 +62,26 @@ next one. Practitioners tuning a current model can leave the sampler alone.
 
 \section{Introduction}
 
-Most deployed language models generate text by sampling. At each step the model assigns
-a probability to every candidate next token; the decoder either takes the most probable
-one (greedy decoding) or draws at random from the distribution. Systems sample because
-greedy decoding returns one fixed continuation per prompt, and in open-ended text that
-continuation tends to be repetitive \citep{holtzman2020curious}. A temperature parameter
+Most deployed language models generate text by sampling. At each step the decoder draws
+the next token at random from the model's predicted distribution; the deterministic
+alternative, greedy decoding, returns one fixed continuation per prompt, and in
+open-ended text that continuation tends to be repetitive
+\citep{holtzman2020curious}. A temperature parameter
 scales the randomness of the draw: raising it moves probability from the model's
-preferred tokens toward rare ones.
+preferred tokens toward rare ones, and the rare tokens are where sampling goes wrong. A
+model's probability estimates are least reliable in the tail of its distribution, so a
+high-temperature draw can select a token that fits the context poorly
+\citep{holtzman2020curious,hewitt2022truncation}. The selected token then becomes
+context for every later step, and the continuation can degenerate into incoherent text.
 
-The rare tokens are where sampling goes wrong. A model's probability estimates are least
-reliable in the tail of its distribution, so a high-temperature draw can select a token
-that fits the context poorly \citep{holtzman2020curious,hewitt2022truncation}. The
-selected token then becomes context for every later step, and the continuation can
-degenerate into incoherent text. Truncation samplers exist to prevent this degeneration:
-they delete the tail of the distribution before the draw and renormalize what remains.
-The rules differ in where they cut the tail; top-$k$, nucleus (top-$p$), min-$p$, and
-top-$n\sigma$ sampling are the four we test, and Section~\ref{sec:related} describes each
-\citep{fan2018hierarchical,holtzman2020curious,nguyen2024minp,tang2024topn}. All of these
-were developed for open-ended generation, such as story writing and dialogue, where
-output variety is the goal \citep{zhou2024decoding}.
-
-The same samplers are now evaluated on tasks with one checkable answer. Deployed
-assistants keep sampling on for every request, so math word problems and multiple-choice
-exams are also decoded at nonzero temperature \citep{song2024goodbad,renze2024temperature}.
-On such tasks a decoding method is scored by accuracy: each generation is right or wrong,
-where open-ended generation needs a human or model judge \citep{zhou2024decoding}. Min-$p$,
-for example, reports accuracy gains over top-$p$ on GSM8K at high temperature
-\citep{nguyen2024minp}.
+Truncation samplers exist to prevent this degeneration: they delete the tail of the
+distribution before the draw, and the rules differ in where they cut. Top-$k$, nucleus
+(top-$p$), min-$p$, and top-$n\sigma$ sampling are the four we test, and
+Section~\ref{sec:related} describes each. All four were developed for open-ended
+generation, where output variety is the goal \citep{zhou2024decoding}, but deployed
+assistants keep sampling on for every request, so the same samplers are now evaluated
+on tasks with one checkable answer: min-$p$, for example, reports accuracy gains over
+top-$p$ on GSM8K at high temperature \citep{nguyen2024minp}.
 
 Those accuracy claims drew a critique. \citet{schaeffer2025minp} asked whether any one
 sampler beats the others once statistical controls are in place. Whichever sampler wins
@@ -110,34 +102,29 @@ collapse temperature.
 Our contributions:
 \begin{itemize}
   \item \textbf{A single-pipeline factorial study.} Seven instruction-tuned models, four
-    GGUF quantization levels (model weights stored at reduced precision) plus a BF16
-    anchor, six decoding methods plus two ablation arms that swap the order in which
-    temperature and truncation are applied, and $T \in \{0.7, 1.0, 1.3\}$, on GSM8K and
-    MMLU-Pro ($N{=}50$ items, $K{=}3$ repetitions): about 204{,}000 generations, with
-    item-clustered bootstrap confidence intervals throughout, plus a follow-up
-    temperature-only cell on two more Llama generations.
+    GGUF quantization levels plus a BF16 anchor, six decoding methods plus two ablation
+    arms that swap the order in which temperature and truncation are applied, and $T \in
+    \{0.7, 1.0, 1.3\}$, on GSM8K and MMLU-Pro ($N{=}50$ items, $K{=}3$ repetitions):
+    about 204{,}000 generations, with item-clustered bootstrap confidence intervals
+    throughout.
   \item \textbf{Robustness is model-bound, and the fragility runs in one family.}
     Every collapse we observe is a Llama, across three of its generations
-    (Section~\ref{sec:modelbound}). On the robust models the sampler is worth at most a
-    few points, and Section~\ref{sec:spread} shows even those few points overstate the
-    true differences.
+    (Section~\ref{sec:modelbound}); on the robust models the sampler is worth at most a
+    few points, and even those overstate the true differences
+    (Section~\ref{sec:spread}).
   \item \textbf{The collapse is a termination failure.} Conditional on emitting
     a well-formed final answer, accuracy is flat in temperature everywhere. What varies is
     the probability of derailing into unparseable text mid-generation
     (Section~\ref{sec:degeneration}).
   \item \textbf{A cliff map from $T{=}1.3$ to $2.0$.} Every model collapses somewhere;
     what distinguishes models is where. On GSM8K, Llama collapses by $T{=}1.5$, Qwen2.5
-    by 1.7, and Gemma-3 by 2.0, and truncation samplers shift each cliff right in order
-    of tail-cutting strength (top-$n\sigma$ $\gg$ min-$p$ $\gg$ top-$p$). The gains the
-    sampler papers report are real, but they appear past the cliff, above deployment
-    temperatures (Section~\ref{sec:cliff}).
-  \item \textbf{Supporting results.} Quantization from Q8 down to Q3 causes no collapse
-    on any model and does not change which sampler ranks best
-    (Section~\ref{sec:quant}). A logit probe and a forced-token experiment
-    (Section~\ref{sec:mechanism}) locate the fragility: every model draws rare
-    off-distribution tokens at the same per-token rate, but one injected tail token
-    multiplies Llama's subsequent escape hazard 2.3-fold while every robust model absorbs
-    it.
+    by 1.7, and Gemma-3 by 2.0. Truncation samplers shift each cliff right in order of
+    tail-cutting strength, so the gains the sampler papers report are real and sit past
+    the cliff, above deployment temperatures (Section~\ref{sec:cliff}).
+  \item \textbf{A mechanism signature.} A logit probe and a forced-token experiment
+    locate the fragility after the first off-distribution token enters the context: one
+    injected tail token multiplies Llama's subsequent escape hazard 2.3-fold, and every
+    robust model absorbs it (Section~\ref{sec:mechanism}).
 \end{itemize}
 
 \section{Related work}
@@ -156,10 +143,9 @@ Top-$n\sigma$ cuts in logit space instead, keeping tokens within $n$ standard de
 of the top logit; temperature rescales all logits equally, so the surviving set does not
 change with temperature \citep{tang2024topn}. Further refinements of the cut exist,
 among them typical sampling and epsilon and eta sampling
-\citep{meister2023typical,hewitt2022truncation}. All of these rules target the same failure:
-incoherent text drawn from the tail at high temperature. \citet{welleck2020consistency}
-proved the worst case of that failure, showing that standard decoders can place
-probability on generations that never terminate. In contrast to the sampler papers, which
+\citep{meister2023typical,hewitt2022truncation}. \citet{welleck2020consistency}
+proved the worst case of the failure all these rules target, showing that standard
+decoders can place probability on generations that never terminate. In contrast to the sampler papers, which
 compare truncation rules against each other, we test whether the failure they all guard
 against occurs at deployment temperatures at all. Outside the Llama family it does not,
 and on the Llamas it takes the non-terminating form: generations run to the token cap
@@ -175,9 +161,9 @@ temperature, the rule cuts the model's original, sharp distribution; applied aft
 cuts one that temperature has already flattened, so the same nominal setting keeps a
 different set of tokens. We adopt both lessons: we report
 statistical uncertainty throughout and run the two chain orders as explicit arms
-(Section~\ref{sec:setup}). That critique pooled its models together, because its question
-was about the sampler. Our question is about the model, so we keep every model separate
-and ask whether the collapse happens on each one. \citet{zhou2024decoding} sweeps
+(Section~\ref{sec:setup}). That critique pooled its models together, because its
+question was about the sampler; ours is about the model, so we keep every model
+separate and ask whether the collapse happens on each one. \citet{zhou2024decoding} sweeps
 decoding hyperparameters on open-ended generation with
 quality and diversity metrics, while our tasks have one checkable answer.
 \citet{shi2024decoding} compare decoding methods on closed-ended tasks and report that
@@ -198,16 +184,12 @@ The nearest study is \citet{grover2026reliability}, which also asks what makes a
 robust to decoding randomness and concludes that instruction tuning is the primary
 determinant. Our data refine that conclusion: all seven of our models are
 instruction-tuned and one still collapses, so instruction tuning cannot be the whole
-answer. Four design differences let our grid observe what theirs cannot:
-\begin{itemize}
-  \item their sweep stops at $T{=}1.0$, and the Llama collapse happens between 1.0
-    and 1.3;
-  \item their robust models score 6 to 30\% on synthetic tasks, so there is little
-    accuracy left to lose;
-  \item their instruct-versus-base contrast changes quantization at the same time (4-bit
-    versus full precision), while we sweep quantization as its own axis;
-  \item they test no truncation samplers.
-\end{itemize}
+answer. Four design differences let our grid observe what theirs cannot: their sweep
+stops at $T{=}1.0$, and the Llama collapse happens between 1.0 and 1.3; their robust
+models score 6 to 30\% on synthetic tasks, so there is little accuracy left to lose;
+their instruct-versus-base contrast changes quantization at the same time (4-bit versus
+full precision), while we sweep quantization as its own axis; and they test no
+truncation samplers.
 \citet{fastowski2025confidence} connect the entropy of a model's token distributions to
 its temperature sensitivity on factual question answering and report that larger models
 are more stable. Our logit probe supports the entropy link (Section~\ref{sec:mechanism}).
@@ -258,11 +240,8 @@ parsing a final answer out of the generated text, so the parser decides how a ge
 that never reaches an answer is graded. We therefore log the parse path of every record
 (strict final-answer sentence, flexible fallback, or failure) and report the parse
 failure rate as a metric of its own; a failed parse grades as incorrect.
-Section~\ref{sec:degeneration} shows that this metric carries the main result. The frozen
-MMLU-Pro subset is the head of the test split, and the split is sorted by category, so
-all 50 items come from one category (business); every within-study contrast holds items
-fixed, and a stratified replication reproduces the headline result
-(Section~\ref{sec:modelbound}, Appendix~\ref{app:strat}).
+Section~\ref{sec:degeneration} shows that this metric carries the main result. Every
+contrast in the study compares cells on the same frozen items.
 
 \textbf{Models and quantization.} The grid holds seven instruction-tuned models from five
 model families: Llama-3.1-8B \citep{grattafiori2024llama}, Mistral-7B-v0.3
@@ -284,10 +263,10 @@ comparison shares items across its two sides, which is everywhere in the grid, t
 bootstrap is paired.
 
 \textbf{Hardware.} Generation ran on RTX 2080~Ti (11\,GB) nodes of a university Slurm
-cluster and one RTX 5070~Ti (16\,GB) workstation for the VRAM-heavy cells and the
-follow-up runs, with per-architecture CUDA builds of the same pinned commit; the study
-totals about 204{,}000 graded generations. Full reproducibility details, including
-commit and file hashes, are in Appendix~\ref{app:repro}.
+cluster and one RTX 5070~Ti (16\,GB) workstation, with per-architecture CUDA builds of
+the same pinned llama.cpp commit; the study totals about 204{,}000 graded generations.
+Full reproducibility details, including commit and file hashes, are in
+Appendix~\ref{app:repro}.
 
 \section{Results}
 
@@ -296,9 +275,9 @@ commit and file hashes, are in Appendix~\ref{app:repro}.
 
 We begin with plain temperature sampling, no truncation: whatever accuracy the intact
 tail loses as temperature rises is the failure the truncation samplers of
-Section~\ref{sec:related} exist to prevent. Figure~\ref{fig:collapse} gives the drop
-from $T{=}0.7$ to $T{=}1.3$, pooled over quantization levels; Table~\ref{tab:collapse}
-in Appendix~\ref{app:grids} gives the exact values, and Section~\ref{sec:quant} shows
+Section~\ref{sec:related} exist to prevent. Figure~\ref{fig:collapse} plots the drop
+from $T{=}0.7$ to $T{=}1.3$, pooled over quantization levels, and
+Table~\ref{tab:collapse} gives the exact values; Section~\ref{sec:quant} shows
 quantization produces no collapse on any model.
 
 \begin{figure*}[t]
@@ -308,6 +287,42 @@ quantization produces no collapse on any model.
 points with 95\% item-clustered bootstrap CIs.}
 \label{fig:collapse}
 \end{figure*}
+
+\begin{table}[t]
+\centering
+\caption{Plain-temperature accuracy drop $T0.7 \to T1.3$ (pp, 95\% item-clustered
+bootstrap CIs; pooled over quantization) and sampler max$-$min accuracy spread at
+$T{=}1.3$ (pp; CIs in Figure~\ref{fig:spread}). $\dagger$: lineage cell, Q8-only and
+temperature-only; accuracy levels in Appendix~\ref{app:lineage}.}
+\label{tab:collapse}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{llrc}
+\toprule
+Model & Task & \multicolumn{1}{c}{drop [95\% CI]} & spread \\
+\midrule
+Llama-3.1-8B & GSM8K & $\mathbf{+34.0}$ [28.5, 39.7] & 36.7 \\
+ & MMLU-Pro & $\mathbf{+40.8}$ [31.8, 50.3] & 41.8 \\
+Mistral-7B-v0.3 & GSM8K & $+3.5$ [$-1.2$, 8.5] & 5.3 \\
+ & MMLU-Pro & $+8.0$ [3.5, 13.2] & 10.0 \\
+Qwen2.5-7B & GSM8K & $+4.0$ [1.2, 7.3] & 3.8 \\
+ & MMLU-Pro & $+4.8$ [1.3, 8.8] & 5.7 \\
+Gemma-3-12B & GSM8K & $+2.0$ [$-0.0$, 4.8] & 3.3 \\
+ & MMLU-Pro & $+3.7$ [0.2, 7.7] & 5.8 \\
+Qwen3-8B & GSM8K & $+0.5$ [$-1.5$, 2.6] & 1.8 \\
+ & MMLU-Pro & $+1.0$ [$-2.4$, 4.8] & 3.5 \\
+Qwen3-4B & GSM8K & $+2.1$ [0.4, 3.9] & 1.3 \\
+ & MMLU-Pro & $+0.7$ [$-1.0$, 2.5] & 1.7 \\
+Qwen3-1.7B & GSM8K & $-0.3$ [$-3.8$, 3.0] & 3.2 \\
+ & MMLU-Pro & $+0.7$ [$-3.4$, 5.0] & 5.5 \\
+\midrule
+Llama-3-8B$^\dagger$ & GSM8K & $+4.0$ [$-2.7$, 11.3] & -- \\
+ & MMLU-Pro & $+16.7$ [9.3, 24.0] & -- \\
+Llama-3.2-3B$^\dagger$ & GSM8K & $+38.0$ [29.3, 47.3] & -- \\
+ & MMLU-Pro & $+36.7$ [26.7, 46.0] & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 The models do not split cleanly into robust and fragile. The Qwen3 family is a tight
 null, Qwen2.5, Gemma, and Mistral drop 2 to 8\,pp with at least one task CI excluding
@@ -320,13 +335,14 @@ Gemma $+7.3$.
 
 A single collapsing checkpoint could still be a quirk of that release rather than a
 family trait, so a follow-up cell repeats the pure-temperature axis on two more Llama
-generations, Llama-3-8B and Llama-3.2-3B (Q8, same frozen items, $K{=}3$;
-Table~\ref{tab:lineage}, Appendix~\ref{app:lineage}). Llama-3.2-3B collapses
-like Llama-3.1-8B ($+38.0\,$pp [29.3, 47.3] on GSM8K, $+36.7$ [26.7, 46.0] on MMLU-Pro)
+generations, Llama-3-8B and Llama-3.2-3B (Q8, same frozen items, $K{=}3$; drops in
+Table~\ref{tab:collapse}, full accuracy levels in Appendix~\ref{app:lineage}).
+Llama-3.2-3B collapses
+like Llama-3.1-8B ($+38.0\,$pp on GSM8K, $+36.7$ on MMLU-Pro)
 and reproduces the degeneration signature of Section~\ref{sec:degeneration}: about half
 of all generations run to the token cap, and accuracy among well-formed answers stays
-at or above the greedy level. Llama-3-8B sits between the two: a null on GSM8K
-($+4.0$ [$-2.7$, 11.3]) but $+16.7\,$pp [9.3, 24.0] on MMLU-Pro, the longer task, a
+at or above the greedy level. Llama-3-8B sits between the two: a null on GSM8K but
+$+16.7\,$pp on MMLU-Pro, the longer task, a
 larger drop than any non-Llama model shows in Figure~\ref{fig:collapse}. Three Llama
 generations produce the three largest MMLU-Pro drops in the study, so the fragility is
 a family trait; what changed in the family's post-training is the open question of
@@ -339,11 +355,12 @@ The previous subsection varied temperature with the sampler fixed; this one hold
 temperature at $T{=}1.3$, the top of the deployment band, and varies the sampler, the
 axis the truncation literature tunes. The maximum minus minimum accuracy across the seven
 stochastic sampler arms is 1.3 to 10.0\,pp on every robust model
-(Figure~\ref{fig:spread} and full grids in Appendix~\ref{app:grids}), and even those numbers
+(Table~\ref{tab:collapse}, spread column; per-arm accuracy grids in
+Appendix~\ref{app:grids}), and even those numbers
 overstate the axis: seven equally good samplers would still show a positive spread,
 because the maximum picks the estimate that got lucky and the minimum the one that did
-not. The true sampler differences are smaller still. Llama's spread of 36.7\,pp (GSM8K) and 41.8\,pp
-(MMLU-Pro) measures something else. Its arms range from plain temperature, which has
+not. The true sampler differences are smaller still. Llama's spread measures something else.
+Its arms range from plain temperature, which has
 already collapsed at $T{=}1.3$, to top-$n\sigma$, which truncates hard enough to hold
 (Section~\ref{sec:cliff}), so on Llama the spread records how much of the collapse each
 rule prevents.
@@ -359,7 +376,18 @@ Section~\ref{sec:related} predict; both orders are in Appendix~\ref{app:tlast}.
 An accuracy drop can come from two failures: completed answers that are wrong, or
 generations that never reach an answer. The parse path that Section~\ref{sec:setup} logs
 for every record separates the two, so we decompose Llama's collapse along it
-(Figure~\ref{fig:decomposition} and full decomposition in Appendix~\ref{app:decomp}).
+(Figure~\ref{fig:decomposition}; full decomposition and example degenerate outputs in
+Appendix~\ref{app:decomp}).
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.9\textwidth]{fig2_decomposition}
+\caption{Overall accuracy (solid) versus accuracy among well-formed, strict-parsed answers
+(dashed) under plain temperature sampling; four models spanning the robustness gradient
+(the three Qwen3 models are flat and omitted for legibility). The dashed lines stay flat:
+among well-formed answers, accuracy barely moves with temperature.}
+\label{fig:decomposition}
+\end{figure*}
 Nearly all of the drop is the second failure: at $T{=}1.3$, 53.8\% of Llama's GSM8K
 generations and 89.2\% of its MMLU-Pro generations derail into token-level noise and run
 to the token cap. Among the generations that do produce a well-formed final answer (a
@@ -383,9 +411,8 @@ Section~\ref{sec:modelbound} leaves open whether the robust models lack the fail
 merely place it beyond the deployment band, so we extend the temperature axis to $T \in
 \{1.3, 1.5, 1.7, 2.0\}$ on three models spanning the gradient of Figure~\ref{fig:collapse}:
 Llama-3.1-8B, Qwen2.5-7B, and Gemma-3-12B (Q8, both tasks, $N{=}50$, $K{=}3$).
-Figure~\ref{fig:cliff} plots the accuracy trajectories; Table~\ref{tab:cliff} in
-Appendix~\ref{app:hight} gives each
-model's drop against its own $T{=}0.7$ anchor. The answer is the second: every model has
+Figure~\ref{fig:cliff} plots the accuracy trajectories, and Table~\ref{tab:cliff} gives
+the exact drops against each model's own $T{=}0.7$ anchor. The answer is the second: every model has
 a cliff, and what distinguishes the models is where it sits. On GSM8K the three models
 collapse in their Figure~\ref{fig:collapse} order, with cliffs roughly 0.2 apart in
 temperature, and the confidence intervals separate as the ladder climbs: from $T{=}1.7$
@@ -396,9 +423,8 @@ $T{=}1.3$, and Qwen2.5 and Gemma fall together at $T{=}1.5$.
 
 Truncation shifts the cliff right in order of tail-cutting strength: top-$p$ buys about
 0.2 in temperature, min-$p$ holds 70\% at $T{=}1.5$ on Llama GSM8K where plain
-temperature is at 9\%, and top-$n\sigma$ is flat to $T{=}2.0$ on all three models,
-consistent with its construction: the surviving token set is
-temperature-invariant. The strict-parse rate tracks accuracy almost one-to-one along the
+temperature is at 9\%, and top-$n\sigma$ is flat to $T{=}2.0$ on all three models, as
+its temperature-invariant construction predicts. The strict-parse rate tracks accuracy almost one-to-one along the
 whole ladder, so the cliff \emph{is} the degeneration cliff. This reconciles the sampler
 papers with our null result: min-$p$ and top-$n\sigma$ are validated at temperatures of
 1.5 to 3, past every model's deployment range, where their gains are real and ordered
@@ -414,51 +440,59 @@ model property. Truncation shifts the cliff right by tail-cutting strength.}
 \label{fig:cliff}
 \end{figure*}
 
+\begin{table}[t]
+\centering
+\caption{The cliff ladder: accuracy drop against each model's own $T{=}0.7$ anchor under
+plain temperature (pp, 95\% item-clustered bootstrap CIs; Q8).}
+\label{tab:cliff}
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{lccc}
+\toprule
+$T$ & Llama-3.1-8B & Qwen2.5-7B & Gemma-3-12B \\
+\midrule
+\multicolumn{4}{l}{\emph{GSM8K}} \\
+1.3 & $+32.7$ [24.7, 41.3] & $+4.0$ [$-0.7$, 9.3] & $+2.7$ [$-2.0$, 8.0] \\
+1.5 & $+68.0$ [58.0, 76.7] & $+24.0$ [15.3, 33.3] & $+14.7$ [8.7, 21.3] \\
+1.7 & $+76.0$ [66.7, 84.7] & $+70.0$ [62.0, 77.3] & $+42.7$ [34.7, 50.7] \\
+2.0 & $+77.3$ [67.3, 86.0] & $+90.7$ [82.7, 97.3] & $+84.0$ [76.7, 90.7] \\
+\midrule
+\multicolumn{4}{l}{\emph{MMLU-Pro}} \\
+1.3 & $+44.7$ [34.0, 56.0] & $+8.0$ [0.0, 16.7] & $+3.3$ [$-3.3$, 10.0] \\
+1.5 & $+46.0$ [35.3, 57.3] & $+40.0$ [28.7, 52.0] & $+39.3$ [29.3, 48.7] \\
+1.7 & $+48.0$ [36.7, 60.0] & $+61.3$ [48.7, 74.0] & $+57.3$ [45.3, 68.0] \\
+2.0 & $+48.0$ [36.7, 59.3] & $+65.3$ [53.3, 78.0] & $+63.3$ [51.3, 75.3] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Quantization and answer agreement}
 \label{sec:quant}
 
 The results so far pool over the four quantization levels. For that to be safe,
 quantization must not cost accuracy on its own, and it must not change what temperature
-and the samplers do. This subsection checks both. The direct cost is small. From Q8\_0 down
-to Q3\_K\_M, greedy accuracy is unchanged on every model of 7B parameters or more: all
-confidence intervals span zero (Figure~\ref{fig:quant}, Appendix~\ref{app:quant}). A real cost appears only on the
-two smallest models and grows as the model shrinks, 7\,pp [1, 13] on Qwen3-4B and 9\,pp
-[0, 18] on Qwen3-1.7B.
+and the samplers do. It costs little: from Q8\_0 down to Q3\_K\_M, greedy accuracy is
+unchanged on every model of 7B parameters or more, and a real cost appears only on the
+two smallest models, 7\,pp on Qwen3-4B and 9\,pp on Qwen3-1.7B. It changes nothing
+about the collapse: recomputed separately at each level, the plain-temperature drop of
+Section~\ref{sec:modelbound} shows Llama-3.1 collapsing at every level, with drops of
+30 to 47\,pp across levels and tasks, while no robust model exceeds 12\,pp at any
+single level; the BF16 anchor on Qwen3-4B shows the same null drop as its quantized
+versions, and Llama's sampler ordering at $T{=}1.3$ is identical at all four levels
+(per-level values in Appendix~\ref{app:quant}).
 
-The interaction is what pooling actually depends on, so we recompute the
-plain-temperature drop of Section~\ref{sec:modelbound} separately at each quantization level
-(Table~\ref{tab:quantdrop}, Appendix~\ref{app:quant}). The result is the same at every
-level: Llama-3.1 collapses everywhere, with drops of 30 to 47\,pp across levels and
-tasks, while no robust model exceeds 12\,pp at any single level. The BF16 anchor on
-Qwen3-4B, running at full precision, shows the same null drop as its quantized versions,
-and Llama's sampler ordering at $T{=}1.3$ is identical at all four levels. Quantization
-shifts baseline accuracy on small models; it does not create the collapse, remove it, or
-change which sampler helps.
-
-A second check addresses a different worry: that the robustness of
-Section~\ref{sec:modelbound} is nothing more than determinism. Flat accuracy across
-temperatures is also what we would see if temperature never really changed the output,
-because the model's next-token distribution is peaked enough that sampling returns
-nearly the greedy path every time. The $K{=}3$ repetitions of the matrix distinguish the
-two readings: each item carries
-three independently sampled generations under identical settings. If the robust models
-were merely deterministic, the three generations would be near copies of one another.
-Instead, the token sequences differ across repetitions, so temperature does change what
-these models write. The question is whether it also changes their answers. For each item
-we count the distinct parsed answers among its three repetitions, 1 meaning all three
-agree and 3 meaning all three disagree; this is the agreement that self-consistency
-decoding \citep{wang2023selfconsistency} exploits by majority vote, used here as a
-diagnostic.
-
-On the robust models the answers converge: 1.1 to 1.4 distinct answers per item on GSM8K
-at $T{=}1.3$, and raising temperature from 0.7 to 1.3 moves the statistic by at most
-$+0.17$ (Table~\ref{tab:selfcons}, Appendix~\ref{app:selfcons}). These models sample
-genuinely different token sequences and still land on the same answer. Llama-3.1 rises
-from 1.5 to 2.3 under the same change: its three repetitions increasingly disagree with
-one another, as expected when each one derails independently. Mistral sits near 2.2 at
-both temperatures, and its scatter has a different source: at a greedy GSM8K accuracy of
-31\%, most repetitions are wrong, and wrong repetitions rarely agree on the same wrong
-number at any temperature. The shift attributable to temperature is $+0.27$.
+A second check separates robustness from determinism: flat accuracy across temperatures
+is also what a model would show if its next-token distributions were peaked enough that
+sampling returns the greedy path every time. The $K{=}3$ repetitions decide between the
+two readings: each item carries three independently sampled generations under identical
+settings, and if the robust models were merely deterministic, the three would be near
+copies of one another. Instead, the token sequences differ across repetitions, and on
+the robust models the answers still converge: 1.1 to 1.4 distinct parsed answers per item on GSM8K at
+$T{=}1.3$, moved by at most $+0.17$ when temperature rises from 0.7 to 1.3. These
+models sample genuinely different token sequences and land on the same answer.
+Llama-3.1 rises from 1.5 to 2.3 under the same change: its three repetitions
+increasingly disagree with one another, as expected when each one derails independently
+(full table, and Mistral's floor-driven scatter, in Appendix~\ref{app:selfcons}).
 
 \subsection{Toward a mechanism: per-token uncertainty ranks with fragility}
 \label{sec:mechanism}
@@ -474,8 +508,8 @@ the statistics then describe the undisturbed trajectory, unaffected by any sampl
 derailment.
 
 Mean greedy-path entropy ranks the seven models' temperature drops at Spearman
-$\rho = +0.96$ (flat-position fraction $+0.96$; top-1 margin $-0.96$;
-Figure~\ref{fig:mechanism}, Appendix~\ref{app:mechanism}): the flatter a model's next-token distributions on its own
+$\rho = +0.96$ (flat-position fraction $+0.96$; top-1 margin $-0.96$; plotted in
+Appendix~\ref{app:mechanism}): the flatter a model's next-token distributions on its own
 greedy path, the more accuracy it loses to temperature. The summaries cannot separate
 one pair, though. Llama-3.1 and Mistral are nearly tied on every statistic we record,
 0.33 versus 0.32 nats of entropy and $1.0 \times 10^{-3}$ probability mass beyond the
@@ -483,27 +517,21 @@ top 20 for both, yet Llama drops 40.8\,pp on MMLU-Pro and Mistral 8.0. Uncertain
 the undisturbed path predicts the ordering of the drops and leaves their size
 unexplained.
 
-Generation lengths rule out one candidate mechanism, derail-and-recover, in which the
-model wanders off for a stretch, finds its way back, and loses accuracy only when the
-detour corrupts the answer: a recovered detour leaves extra tokens behind, so
-terminated generations at $T{=}1.3$ should be longer than at $T{=}0.7$.
-On every robust model their length distribution is instead essentially unchanged
-(90th-percentile ratio 0.85 to 1.19 across models and tasks; Table~\ref{tab:recovery}),
-and Llama's surviving generations at $T{=}1.3$ are \emph{shorter} than at $T{=}0.7$
-(90th percentile $\times 0.73$ on GSM8K, $\times 0.55$ on MMLU-Pro). Shortening is the
-survivorship of Section~\ref{sec:degeneration} at work: when derailment is permanent and
-its per-token risk compounds, the generations that still finish are disproportionately
-the short ones. In every model, a generation that derails does not come back.
+Generation lengths rule out one candidate mechanism, derail-and-recover: a recovered
+detour leaves extra tokens behind, yet on every robust model the length distribution
+of terminated generations is essentially unchanged from $T{=}0.7$ to $T{=}1.3$
+(90th-percentile ratio 0.85 to 1.19), and Llama's survivors at $T{=}1.3$ are
+\emph{shorter}, the survivorship of Section~\ref{sec:degeneration} at work. A
+generation that derails does not come back, and its per-token risk compounds.
 
 That per-token risk can be estimated from the probe itself. From the recorded top-20
-arrays we compute, for each position, the probability that sampling at $T{=}1.3$ picks a
-token from beyond the model's own top 20. We call this the escape hazard: the per-token probability of a
-genuine tail draw. Llama's is 0.0033 per position and Mistral's 0.0034, about 0.85
-expected tail draws per 256 positions for both, and across the seven models the hazard
-ranks the drops at the same $\rho = +0.96$. The two models therefore take their first
-off-distribution token equally often, and temperature scaling does not reveal a
-difference the raw probabilities hid. What separates Llama from Mistral must then be
-what happens after an off-distribution token has entered the model's own context.
+arrays we compute, for each position, the probability that sampling at $T{=}1.3$ picks
+a token from beyond the model's own top 20; we call this the escape hazard, the
+per-token probability of a genuine tail draw. Llama's is 0.0033 per position and
+Mistral's 0.0034, about 0.85 expected tail draws per 256 positions for both, and across
+the seven models the hazard ranks the drops at the same $\rho = +0.96$. The two models
+therefore take their first off-distribution token equally often; what separates them
+must be what happens after that token has entered the model's own context.
 
 A perturbation experiment measures that directly. For each model and frozen prompt we
 greedy-decode a 48-token prefix, replace the next token with the model's own rank-20
@@ -518,8 +546,8 @@ gains more than $+0.0014$. This per-model destabilization ranks the temperature 
 at $\rho = +0.86$ (the entropy increase, $+0.82$). It is the compounding loop
 anticipated in the introduction, measured directly: an off-distribution token in
 context raises the probability of drawing the next one, and the size of that rise is
-what distinguishes the fragile models (Appendix~\ref{app:mechanism} consolidates the
-per-model probe numbers). With seven models these are consistency checks, not a
+what distinguishes the fragile models (per-model probe numbers in
+Appendix~\ref{app:mechanism}). With seven models these are consistency checks, not a
 confirmed causal account, and we report them as such.
 
 \section{Discussion}
@@ -538,22 +566,10 @@ validation catches it, while the rate of silent errors, well-formed but wrong an
 barely moves.
 
 \textbf{For the sampler literature.} Truncation samplers solve a real problem, and the
-problem sits above the temperatures at which models are deployed. The papers
-introducing min-$p$ and top-$n\sigma$ validate them at $T \ge 1.5$, past every cliff we
-map, so their reported gains are real safety margin beyond the cliff; our grid shows
-that below the cliff there is no failure left for a sampler to prevent. A sampler
+problem sits above the temperatures at which models are deployed: below the cliff there
+is no failure left for a sampler to prevent (Section~\ref{sec:cliff}). A sampler
 evaluation should therefore say where its models' cliffs sit, since a gain measured
 past one model's cliff need not exist on a model whose cliff lies further out.
-
-\textbf{For the robustness line.} The fragility follows a lineage: three Llama
-generations produce the three largest MMLU-Pro
-drops in the study while models older, newer, smaller, and larger stay robust, which points at
-something the family's post-training recipe shares. Our contribution to that question
-is the behavioral signature a mechanism study should explain: termination failure with
-intact answer selection, first off-distribution tokens that arrive at the same
-per-token rate in every model, and a post-injection destabilization that only the
-fragile family shows. Which post-training choices set the size of that destabilization
-is, to us, the most interesting open question the data raise.
 
 \section{Conclusion}
 Across nine models from five families, the choice of truncation sampler is a
@@ -563,8 +579,11 @@ temperature across three of its generations. Every model has a cliff above its
 deployment range, robustness is where
 the cliff sits, and truncation samplers move the cliff without mattering below it.
 These results argue for screening temperature fragility before deployment rather than
-tuning the sampler after it. The open question our data sharpen but cannot answer is
-what, in post-training, moves the cliff.
+tuning the sampler after it. The data also fix the signature a mechanism study must
+explain: termination failure with intact answer selection, off-distribution tokens
+arriving at the same per-token rate in every model, and a post-injection
+destabilization only the fragile family shows. The open question our data sharpen but
+cannot answer is what, in post-training, moves the cliff.
 
 \section*{Limitations}
 
@@ -606,9 +625,8 @@ as consistency checks rather than a causal account.
 
 \section{Full sampler--temperature grids}
 \label{app:grids}
-Table~\ref{tab:collapse} gives the exact pure-temperature drops plotted in
-Figure~\ref{fig:collapse}. Figure~\ref{fig:spread} plots the per-model sampler
-max$-$min spread of Section~\ref{sec:spread}. Tables~\ref{tab:grid-gsm8k} and
+Figure~\ref{fig:spread} plots the per-model sampler max$-$min spread of
+Section~\ref{sec:spread} with its confidence intervals. Tables~\ref{tab:grid-gsm8k} and
 \ref{tab:grid-mmlu} give the full main-matrix grids: accuracy for every sampler arm and
 temperature, per model, pooled over quantization levels.
 \begin{figure*}[t]
@@ -617,27 +635,6 @@ temperature, per model, pooled over quantization levels.
 \caption{Sampler max$-$min accuracy spread at $T{=}1.3$ per model (95\% CIs).}
 \label{fig:spread}
 \end{figure*}
-\begin{table}[t]
-\centering
-\caption{Pure-temperature accuracy drop $T0.7 \to T1.3$ (pp, 95\% item-clustered bootstrap
-CIs), pooled over quantization levels.}
-\label{tab:collapse}
-\small
-\setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{lcc}
-\toprule
-Model & GSM8K & MMLU-Pro \\
-\midrule
-Llama-3.1-8B   & $\mathbf{+34.0}$ [28.5, 39.7] & $\mathbf{+40.8}$ [31.8, 50.3] \\
-Mistral-7B-v0.3 & $+3.5$ [$-1.2$, 8.5] & $+8.0$ [3.5, 13.2] \\
-Qwen2.5-7B     & $+4.0$ [1.2, 7.3]   & $+4.8$ [1.3, 8.8] \\
-Gemma-3-12B    & $+2.0$ [$-0.0$, 4.8] & $+3.7$ [0.2, 7.7] \\
-Qwen3-8B       & $+0.5$ [$-1.5$, 2.6] & $+1.0$ [$-2.4$, 4.8] \\
-Qwen3-4B       & $+2.1$ [0.4, 3.9]   & $+0.7$ [$-1.0$, 2.5] \\
-Qwen3-1.7B     & $-0.3$ [$-3.8$, 3.0] & $+0.7$ [$-3.4$, 5.0] \\
-\bottomrule
-\end{tabular}
-\end{table}
 \begin{table*}[p]\centering
 \caption{GSM8K accuracy (\%) by sampler and temperature, pooled over quantization.}
 \label{tab:grid-gsm8k}
@@ -651,24 +648,12 @@ Qwen3-1.7B     & $-0.3$ [$-3.8$, 3.0] & $+0.7$ [$-3.4$, 5.0] \\
 
 \section{Degeneration decomposition}
 \label{app:decomp}
-Figure~\ref{fig:decomposition} plots overall accuracy against accuracy conditional on a
-well-formed answer.
 Table~\ref{tab:decomp} decomposes accuracy under plain temperature sampling by parse path:
 the strict final-answer-sentence rate, the parse-failure rate, the fraction of generations
 that ran to the token cap (including server-recovered degenerate outputs), and accuracy
 conditional on a strict parse. Figure~\ref{fig:degenexamples} shows two representative
 degenerate outputs. The pattern is consistent: a coherent opening, a mid-generation
 derailment, then token noise until the cap. The model never reaches an answer at all.
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.9\textwidth]{fig2_decomposition}
-\caption{Overall accuracy (solid) versus accuracy among well-formed, strict-parsed answers
-(dashed) under plain temperature sampling; four models spanning the robustness gradient
-(the three Qwen3 models are flat and omitted for legibility). The dashed lines stay flat:
-among well-formed answers, accuracy barely moves with temperature.}
-\label{fig:decomposition}
-\end{figure*}
 
 \begin{figure}[t]
 \centering
@@ -753,34 +738,6 @@ of the main matrix.}
 
 \section{High-temperature regime}
 \label{app:hight}
-Table~\ref{tab:cliff} gives each ladder model's plain-temperature drop against its own
-$T{=}0.7$ anchor, the values behind Figure~\ref{fig:cliff}.
-\begin{table}[t]
-\centering
-\caption{The cliff ladder: accuracy drop against each model's own $T{=}0.7$ anchor under
-plain temperature (pp, 95\% item-clustered bootstrap CIs; Q8).}
-\label{tab:cliff}
-\footnotesize
-\setlength{\tabcolsep}{2pt}
-\begin{tabular}{lccc}
-\toprule
-$T$ & Llama-3.1-8B & Qwen2.5-7B & Gemma-3-12B \\
-\midrule
-\multicolumn{4}{l}{\emph{GSM8K}} \\
-1.3 & $+32.7$ [24.7, 41.3] & $+4.0$ [$-0.7$, 9.3] & $+2.7$ [$-2.0$, 8.0] \\
-1.5 & $+68.0$ [58.0, 76.7] & $+24.0$ [15.3, 33.3] & $+14.7$ [8.7, 21.3] \\
-1.7 & $+76.0$ [66.7, 84.7] & $+70.0$ [62.0, 77.3] & $+42.7$ [34.7, 50.7] \\
-2.0 & $+77.3$ [67.3, 86.0] & $+90.7$ [82.7, 97.3] & $+84.0$ [76.7, 90.7] \\
-\midrule
-\multicolumn{4}{l}{\emph{MMLU-Pro}} \\
-1.3 & $+44.7$ [34.0, 56.0] & $+8.0$ [0.0, 16.7] & $+3.3$ [$-3.3$, 10.0] \\
-1.5 & $+46.0$ [35.3, 57.3] & $+40.0$ [28.7, 52.0] & $+39.3$ [29.3, 48.7] \\
-1.7 & $+48.0$ [36.7, 60.0] & $+61.3$ [48.7, 74.0] & $+57.3$ [45.3, 68.0] \\
-2.0 & $+48.0$ [36.7, 59.3] & $+65.3$ [53.3, 78.0] & $+63.3$ [51.3, 75.3] \\
-\bottomrule
-\end{tabular}
-\end{table}
-
 Table~\ref{tab:hightemp} reports a small probe ($N{=}15$, $K{=}3$, Q8) in the regime
 where min-$p$ and top-$n\sigma$ report their largest gains. The sampler ordering is
 top-$n\sigma$ $\gg$ min-$p$ $\gg$ top-$p$ $\approx$ temperature; the zero cells are
@@ -839,9 +796,15 @@ ones. The BF16 anchor on Qwen3-4B shows the same null drop as its quantized vers
 Mean distinct parsed answers per item across the $K{=}3$ repetitions under plain
 temperature (Table~\ref{tab:selfcons}). Robust models sample diverse token sequences that
 converge on the same answer; a parse failure counts as one distinct answer, so the
-statistic is a divergence proxy. The parse-failure convention censors Llama-3.1 on
+statistic is a divergence proxy; it is the per-item agreement that self-consistency
+decoding \citep{wang2023selfconsistency} exploits by majority vote. The parse-failure
+convention censors Llama-3.1 on
 MMLU-Pro at $T{=}1.3$: with 84.5\% of generations failing to parse, the repetitions
-agree on having no answer, and the statistic falls to 1.28.
+agree on having no answer, and the statistic falls to 1.28. Mistral sits near 2.2
+distinct answers at both temperatures, and its scatter has a different source: at a
+greedy GSM8K accuracy of 31\%, most repetitions are wrong, and wrong repetitions rarely
+agree on the same wrong number at any temperature. The shift attributable to
+temperature is $+0.27$.
 \begin{table}[h]\centering
 \caption{Mean distinct parsed answers per item ($K{=}3$, pooled over quantization).}
 \label{tab:selfcons}
