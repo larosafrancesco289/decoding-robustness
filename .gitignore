@@ -25,6 +25,9 @@ paper/*.blg
 paper/*.bbl
 paper/*.log
 
+# Local editing snapshots of the paper
+paper/backup-*/
+
 # Editors / OS
 .vscode/
 .idea/
@@ -42,4 +45,3 @@ paper/*.log
 /HANDOFF.md
 /PUBLISHING.md
 /SUBMIT.md
-/WRITING.md

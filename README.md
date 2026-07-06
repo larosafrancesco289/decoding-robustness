@@ -3,15 +3,17 @@
 **Temperature kills models, not answers: decoding robustness is a model property.**
 
 A single-pipeline factorial study of decoding strategies on small open-weight LLMs:
-7 instruction-tuned models from 5 vendors (1.7B-12B), 4 GGUF quantization levels plus a
-BF16 anchor, 8 sampler arms, temperatures 0.7-2.0, GSM8K and MMLU-Pro, ~202,000 graded
-generations on commodity GPUs. Paper source in [`paper/`](paper/).
+seven instruction-tuned models from five families (1.7B-12B), 4 GGUF quantization levels
+plus a BF16 anchor, 8 sampler arms, temperatures 0.7-2.0, GSM8K and MMLU-Pro, plus a
+temperature-only cell on two more Llama generations; about 204,000 graded generations on
+commodity GPUs. Paper source in [`paper/`](paper/).
 
 ## Findings (paper section in parentheses)
 
 - **At deployment temperatures the sampler barely matters; the model is the variable.**
-  Llama-3.1-8B loses 34-41pp under plain temperature at T=1.3 while six other models,
-  including the older Mistral-7B-v0.3, stay within 10pp (4.1-4.2).
+  Under plain temperature at T=1.3 the Llama family collapses: Llama-3.1-8B loses
+  34-41pp, Llama-3.2-3B collapses the same way, and Llama-3-8B loses 17pp on MMLU-Pro.
+  Every model outside the family stays within 8pp (4.1-4.2).
 - **The collapse is degeneration, not wrong answers.** Accuracy conditional on a
   well-formed answer is flat in temperature; what collapses is termination. Standard
   parsers disguise this (GSM8K as wrong answers, MMLU-Pro as parse failure) (4.3).
@@ -19,12 +21,12 @@ generations on commodity GPUs. Paper source in [`paper/`](paper/).
   shows a staircase (Llama by 1.5, Qwen2.5 by 1.7, Gemma-3 by 2.0 on GSM8K); truncation
   samplers shift the cliff right by tail-cutting strength; sampler gains are real but
   live past every model's deployment range (4.4).
-- **Quantization neither causes a collapse nor reorders samplers** (Q8 to Q3; the effect
-  grows as models shrink) (4.5).
-- **Mechanism:** greedy-path uncertainty ranks with fragility (Spearman +0.96), but the
-  fragile-robust gap at equal entropy isolates *single-token perturbation stability*:
-  derailment is absorbing, and off-distribution tokens arrive at the same per-token rate
-  in robust models and are absorbed only by them (4.6).
+- **Quantization does not cause the collapse and does not reorder samplers** (Q8 to Q3;
+  the effect grows as models shrink) (4.5).
+- **Mechanism:** greedy-path uncertainty ranks with fragility (Spearman +0.96), and a
+  forced-token perturbation isolates the difference: one off-distribution token in
+  context multiplies the fragile model's chance of drawing the next one (2.3x, against
+  at most 1.35x for robust models), so derailment is self-reinforcing (4.6).
 
 ## Reproduce
 

@@ -229,7 +229,7 @@ def fig2_decomposition(by, acc_strict):
             ys = [y for _, y in label_pos]
             for i in range(1, len(ys)):
                 ys[i] = max(ys[i], ys[i - 1] + min_gap)
-            for (m, _), y in zip(label_pos, ys):
+            for (m, _), y in zip(label_pos, ys, strict=True):
                 ax.annotate(SHORT[m], (temps[-1], y),
                             xytext=(5, 0), textcoords="offset points",
                             color=palette[m], fontsize=7.5, va="center")

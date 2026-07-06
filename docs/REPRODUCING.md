@@ -22,6 +22,7 @@ are Bartowski imatrix GGUFs; SHA256 hashes in `DOWNLOADS.md` and `*.meta.json` s
 | Study arm | Config | Runner | Output |
 |---|---|---|---|
 | Main matrix (7 models x 4 quants x 8 arms x T0.7/1.0/1.3) | `configs/full_matrix.yaml` | `scripts/run_pilot.py` (Slurm: `scripts/slurm/`) | `results/full_matrix/shards/` |
+| Llama lineage cell (Llama-3-8B + Llama-3.2-3B, Q8, temperature-only) | `configs/llama_lineage.yaml` | `scripts/run_lineage_20260704.sh` | `results/llama_lineage/lineage.jsonl` |
 | Cliff ladder (3 models, Q8, T1.3-2.0) | `configs/cliff_ladder.yaml` | `scripts/run_pilot.py` | `results/cliff_ladder/ladder.jsonl` |
 | Stratified MMLU-Pro replication | `configs/mmlu_strat_check.yaml` | `scripts/run_pilot.py` | `results/mmlu_strat_check/strat.jsonl` |
 | High-temperature probe (T2-3) | `configs/hightemp_smoke.yaml` | `scripts/run_pilot.py` | `results/hightemp_smoke/` |
@@ -38,7 +39,8 @@ Every run is resumable: records are keyed by
 
 | Artifact | Producer | Notes |
 |---|---|---|
-| Tables 1 + App. A-G (`paper/tables/*.tex`) | `scripts/gen_tables.py` | reads the shards directly |
+| Appendix tables (`paper/tables/*.tex`) | `scripts/gen_tables.py` | reads the shards directly |
+| Main-text Tables 1-2 (inline in `paper/main.tex`) | `scripts/stats_matrix.py` + `scripts/analyze_followups.py` | drop/spread CIs (Table 1), cliff ladder (Table 2) |
 | Figures 1-6 (`figures/*.pdf`) | `scripts/make_figures.py` | `uv sync --extra figures` |
 | Headline stats + CIs (`STATS.txt`) | `scripts/stats_matrix.py` | item-clustered bootstrap, B=2000 |
 | Degeneration decomposition (`DECOMP.txt`, 4.3) | `scripts/decompose_collapse.py` | parse-path split, cap rates |
