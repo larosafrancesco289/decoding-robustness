@@ -1,4 +1,4 @@
-# Cliff-edge temperature ladder (2026-06-10) — the one non-tautological high-T experiment
+# Cliff-edge temperature ladder (2026-06-10).
 # Question: WHERE does each model's cliff sit in the
 # 1.3–2.0 band, per sampler? The matrix showed Llama dead by 1.3 while Gemma survived 1.5
 # in the smoke; T=2–3 is mechanically trivial (softmax ~uniform). The signal is the gradient
@@ -8,7 +8,7 @@
 # robust mid, Gemma-3 robust); Q8 only (quant held fixed); the 4 head-to-head samplers;
 # T = 1.3 / 1.5 / 1.7 / 2.0 (1.3 overlaps the matrix as the anchor rung, 2.0 overlaps the
 # smoke); both tasks, frozen N=50 head subsets (same items as the matrix, paired); K=3.
-# No greedy arm — the matrix Q8 greedy cells are the T=0 anchor and join in analysis.
+# No greedy arm; the matrix Q8 greedy cells are the T=0 anchor and join in analysis.
 # 4800 records/model, 14,400 total. Separate output_dir; ids never mix with the matrix.
 
 name: cliff-ladder

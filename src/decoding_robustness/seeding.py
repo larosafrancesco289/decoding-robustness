@@ -1,8 +1,8 @@
-"""Deterministic per-sample seed derivation (SPEC §7.4).
+"""Deterministic per-sample seed derivation.
 
 The same item gets the same seed across every decoding condition and quant level,
 which enables the paired / common-random-numbers design that cancels between-prompt
-variance — the main source of statistical power for the interaction estimate.
+variance, the main source of statistical power for the paired comparisons.
 """
 
 from __future__ import annotations

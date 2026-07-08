@@ -1,10 +1,11 @@
-# Phase-0 pilot (SPEC §4.4, milestone M3).
+# Pilot config (single model, the full decoding grid).
 # Single canary model (Llama-3.1-8B-Instruct) across the full quant ladder and decoding
 # grid, on a small per-task subset. Purpose: validate the pipeline, measure throughput,
 # and produce the first sampler×quant table before committing to the full matrix.
 #
-# NOTE: dataset revisions are "main" and quant_files are empty until M1/M2 pins them
-# (open TODOs in SPEC §12). Do not treat this as the pre-registered Phase-1 config.
+# NOTE: dataset revisions are "main" here; the exact items and rendered prompts of
+# every run are logged per record, which is what the analyses key on
+# Do not treat this as the frozen main-matrix config (that is configs/full_matrix.yaml).
 
 name: pilot-llama-phase0
 phase: pilot
@@ -25,7 +26,7 @@ checkpoints:
 
 quant_levels: [Q8_0, Q6_K, Q4_K_M, Q3_K_M]
 
-# Each method at its source-justified default (SPEC §4.2); temperature is swept separately.
+# Each method at its source-justified default; temperature is swept separately.
 # Rationale: classic samplers use the llama.cpp engine defaults (the values the practical
 # user base actually runs, corroborated by the origin papers); the two method-defining
 # samplers use the value their introducing paper recommends.
@@ -40,11 +41,11 @@ samplers:
     min_p: 0.05               # llama.cpp default; low end of Nguyen et al. 2024 (0.05-0.1)
   - method: top_n_sigma
     top_n_sigma: 1.0          # Tang et al. 2024: stated robust, tuning-free default
-  # Sampler-chain ordering arms (pre-registered M3 decision). The DEFAULT chain above is
-  # temperature-FIRST — faithful to how the min_p/top-nσ papers were evaluated (HuggingFace
+  # Sampler-chain ordering arms. The DEFAULT chain above is
+  # temperature-FIRST, faithful to how the min_p/top-nσ papers were evaluated (HuggingFace
   # order), and the order min_p needs to adapt to temperature. The two arms below apply
   # temperature LAST (llama.cpp's native default): the "fair fight" test of whether min_p
-  # still beats top_p once top_p gets the ordering that protects it at high T — directly
+  # still beats top_p once top_p gets the ordering that protects it at high T, directly
   # probing the min-p critique (arXiv:2506.13681). top-nσ and top_k are ~order-invariant,
   # so only top_p and min_p get a second arm. Labelled '..._tlast' (see SamplerSpec.label).
   - method: min_p
@@ -61,7 +62,7 @@ tasks:
   - name: gsm8k
     hf_dataset: openai/gsm8k
     hf_config: main
-    revision: main          # TODO: pin to a specific commit before Phase 1
+    revision: main          # exact items and prompts are logged per record
     split: test
     subset_size: 50
     max_new_tokens: 512
@@ -69,7 +70,7 @@ tasks:
 
   - name: mmlu_pro
     hf_dataset: TIGER-Lab/MMLU-Pro
-    revision: main          # TODO: pin
+    revision: main
     split: test
     subset_size: 50
     max_new_tokens: 1024
@@ -78,7 +79,7 @@ tasks:
   - name: gpqa_diamond
     hf_dataset: Idavidrein/gpqa
     hf_config: gpqa_diamond
-    revision: main          # TODO: pin
+    revision: main
     split: train            # GPQA ships its labeled set under the train split
     subset_size: 50
     max_new_tokens: 1536    # GPQA's quantitative derivations are long; 1024 was hit (pilot
@@ -99,6 +100,6 @@ server:
                             # reasoning was truncated mid-derivation before it emitted the
                             # answer (33% parse-fail even at greedy). 2048/slot fixes it.
   n_gpu_layers: -1
-  parallel: 8               # batched serving = the throughput lever (SPEC §8); the client
+  parallel: 8               # batched serving = the throughput lever; the client
                             # keeps this many completions in flight. Seed-logged but not
-                            # bit-exact (SPEC §7.3) — accepted for the pilot.
+                            # bit-exact; accepted for the pilot.

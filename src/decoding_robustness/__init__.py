@@ -1,6 +1,7 @@
-"""decoding-robustness: decoding-strategy × quantization interaction study.
+"""decoding-robustness: temperature robustness of decoding strategies across models,
+quantization levels, and tasks.
 
-See SPEC.md for the research question, experimental design, and implementation plan.
+See the README for the research question and experimental design.
 """
 
 __version__ = "0.1.0"

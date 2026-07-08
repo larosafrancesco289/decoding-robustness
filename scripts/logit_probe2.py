@@ -107,7 +107,7 @@ def main() -> None:
                     result = client.completion(rendered, params)
                     entries = result.raw.get("completion_probabilities", [])
                     if not entries:
-                        print(f"   !! {key}: no completion_probabilities — skipped")
+                        print(f"   !! {key}: no completion_probabilities; skipped")
                         continue
                     positions = []
                     for e in entries:

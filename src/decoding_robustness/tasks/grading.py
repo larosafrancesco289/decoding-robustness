@@ -1,8 +1,8 @@
-"""Deterministic grading (SPEC §4.3, §5): exact normalised match, no LLM judge.
+"""Deterministic grading: exact normalised match, no LLM judge.
 
 Grading is split from parsing on purpose: the parser decides *what the model answered*
 (and whether it answered parseably), the grader decides *whether that answer is correct*.
-A parse failure is never silently counted as wrong-with-an-answer — ``correct`` is False
+A parse failure is never silently counted as wrong-with-an-answer; ``correct`` is False
 and the parse path is logged so the failure rate can be reported separately.
 """
 

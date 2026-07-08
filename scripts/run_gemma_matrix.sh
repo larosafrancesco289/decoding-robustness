@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Autonomous Gemma-3-12B launcher, PER-QUANT (rev 2026-06-04, slow-link aware). The download
 # (scripts/dl_gemma.sh) lands quants one at a time over a ~0.77MB/s link, Q4_K_M first. So we
-# run each Gemma cell the moment ITS gguf+sidecar exist AND the Qwen2.5 matrix is done — the
+# run each Gemma cell the moment ITS gguf+sidecar exist AND the Qwen2.5 matrix is done; the
 # headline cross-vendor result (Q4_K_M) comes out tonight; Q8/Q6/Q3 follow as they arrive.
 # Gemma is 12B -> parallel=4 / n_ctx=12288 (VRAM headroom on the 16GB 5070 Ti). thinking-OFF.
 # On first GPU grab we preempt the optional thinking-full cell + retire the old Qwen2.5
@@ -69,4 +69,4 @@ log "resuming thinking-ON full cell (overnight, resumable)"
 uv run python scripts/run_pilot.py --config "$THINK_CFG" --enable-thinking --model-dir models \
   --out "$THINK_OUT" >> results/thinking_full/thinking_full_run.log 2>&1 \
   || log "WARN thinking resume failed"
-log "THINKING-FULL RESUME COMPLETE — all autonomous work done"
+log "THINKING-FULL RESUME COMPLETE; all queued work done"

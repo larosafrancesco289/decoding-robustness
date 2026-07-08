@@ -1,6 +1,6 @@
 """Tests for the M2 task layer: numeric parsing, grading, and the GSM8K gold extractor.
 
-All offline — no dataset download, no server. The dataset *loader* itself is exercised
+All offline: no dataset download, no server. The dataset *loader* itself is exercised
 by the M2 driver (scripts/run_m2.py), which needs the network and a pinned revision.
 """
 

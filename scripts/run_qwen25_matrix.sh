@@ -50,7 +50,7 @@ pkill -f "run_pilot.py --config $THINK_CFG" 2>/dev/null || true
 sleep 5
 pkill -x llama-server 2>/dev/null || true
 free_gpu
-log "GPU free — starting Qwen2.5-7B matrix (headline)"
+log "GPU free; starting Qwen2.5-7B matrix (headline)"
 
 # 4. Run the 4 Qwen2.5 cells (sequential, resumable; matrix shard convention).
 for q in "${QUANTS[@]}"; do
@@ -68,4 +68,4 @@ free_gpu
 log "resuming thinking-ON full cell (overnight, resumable)"
 uv run python scripts/run_pilot.py --config "$THINK_CFG" --enable-thinking --model-dir models \
   --out "$THINK_OUT" >> results/thinking_full/thinking_full_run.log 2>&1 || log "WARN thinking resume failed"
-log "THINKING-FULL RESUME COMPLETE — all autonomous work done"
+log "THINKING-FULL RESUME COMPLETE; all queued work done"

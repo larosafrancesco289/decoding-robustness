@@ -1,11 +1,11 @@
 # High-temperature SMOKE test (2026-06-09). Small-sample probe before committing to a full
 # high-T sweep. Question: the min-p / top-nσ papers validate at T=2–3; we capped the matrix at
 # T=1.3. Does the sampler choice start to matter at T=2/3, i.e. do min_p / top_n_sigma rescue a
-# robust model where plain temperature dies — and does Llama-3.1 stay dead?
+# robust model where plain temperature dies, and does Llama-3.1 stay dead?
 #
 # Design: 2 models (Llama-3.1 dying control + Gemma-3 robust subject), Q8 only (quant held
 # fixed), the 4 samplers that form the head-to-head, T=2.0 and T=3.0. Run with --limit for a
-# tiny item count. NOT the frozen matrix — separate output_dir so ids never collide.
+# tiny item count. NOT the frozen matrix; separate output_dir so ids never collide.
 
 name: hightemp-smoke
 phase: hightemp_smoke

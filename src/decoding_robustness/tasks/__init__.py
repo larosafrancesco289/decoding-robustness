@@ -1,6 +1,6 @@
-"""Task layer (M2): dataset loaders, deterministic answer parsers, and graders.
+"""Task layer: dataset loaders, deterministic answer parsers, and graders.
 
-Currently implements GSM8K (CoT, numeric exact-match); MMLU-Pro and GPQA join at M3/M4.
+Implements GSM8K (CoT, numeric exact-match), MMLU-Pro, and GPQA (letter exact-match).
 """
 
 from __future__ import annotations

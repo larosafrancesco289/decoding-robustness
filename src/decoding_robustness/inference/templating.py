@@ -1,7 +1,7 @@
-"""Client-side chat-prompt rendering (SPEC §4.3, §7).
+"""Client-side chat-prompt rendering.
 
 Each model's *official* chat template is rendered here, on the client, with the same
-Jinja2 engine HuggingFace uses (`apply_chat_template`) — so the rendered string matches
+Jinja2 engine HuggingFace uses (`apply_chat_template`), so the rendered string matches
 what the model was trained to expect. We render client-side (rather than letting the
 server apply the template) so the exact prompt string exists before the request and can
 be hashed and logged per generation.
@@ -80,5 +80,5 @@ class ChatTemplate:
 
 
 def prompt_sha256(prompt: str) -> str:
-    """Stable hash of a rendered prompt, logged per generation (SPEC §7.1)."""
+    """Stable hash of a rendered prompt, logged per generation."""
     return hashlib.sha256(prompt.encode("utf-8")).hexdigest()

@@ -1,7 +1,7 @@
 """Tests for the resumable generation loop, incl. client-side concurrency.
 
-A stub client stands in for llama-server so the loop logic — id-skip resume, grading,
-and concurrent execution — is exercised offline.
+A stub client stands in for llama-server so the loop logic (id-skip resume, grading,
+and concurrent execution) is exercised offline.
 """
 
 from __future__ import annotations

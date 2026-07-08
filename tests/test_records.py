@@ -1,4 +1,4 @@
-"""Tests for the JSONL record store: deterministic ids + resumable id-skip (SPEC §7.2)."""
+"""Tests for the JSONL record store: deterministic ids + resumable id-skip."""
 
 from __future__ import annotations
 

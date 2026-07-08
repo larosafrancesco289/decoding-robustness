@@ -1,8 +1,8 @@
-"""llama-server process lifecycle (SPEC §7): launch, wait for health, shut down.
+"""llama-server process lifecycle: launch, wait for health, shut down.
 
 One (model, quant) pair is one server load. The runner loops conditions (sampler,
 temperature) as request params against a single running server, which is the throughput
-lever (SPEC §8) — so launching/stopping the server is deliberately separate from issuing
+lever, so launching/stopping the server is deliberately separate from issuing
 completions.
 """
 

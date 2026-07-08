@@ -1,8 +1,9 @@
-"""Aggregate the pilot JSONL into the first sampler×quant accuracy table (SPEC §13/M3).
+"""Aggregate result JSONL into sampler×quant and sampler×temperature accuracy tables.
 
-Pure aggregation over GenerationRecords — no plotting, no stats model (that is M4). The
-table is the at-a-glance artifact for the M3 decision gate: does the sampler ranking move
-as bits drop, and is the pipeline producing believable numbers?
+Pure aggregation over GenerationRecords; no plotting, no stats model (those live in
+scripts/stats_matrix.py and scripts/make_figures.py). The tables answer at a glance
+whether the sampler ranking moves as bits drop and whether the pipeline is producing
+believable numbers.
 """
 
 from __future__ import annotations
@@ -87,7 +88,7 @@ class SamplerQuantTable:
                     if cell and cell.accuracy is not None:
                         row += f"{cell.accuracy:6.1%}({cell.n:>3})".rjust(12)
                     else:
-                        row += "—".rjust(12)
+                        row += "-".rjust(12)
                 lines.append(row)
         return "\n".join(lines)
 
@@ -96,8 +97,8 @@ class SamplerQuantTable:
 class SamplerTemperatureTable:
     """sampler (rows) × temperature (cols) accuracy grid, pooled over quant, split by task.
 
-    This is the headline view for SQ1 (temperature robustness): the sampler×quant table
-    pools over temperature and so *hides* the whole story — that pure temperature collapses
+    This is the headline view for temperature robustness: the sampler×quant table
+    pools over temperature and so *hides* the whole story, that pure temperature collapses
     at high T while min_p / top-nσ hold. Here temperature is the column axis and we pool over
     the quant levels, which is the margin the pilot's narrative is stated on.
     """
@@ -139,6 +140,6 @@ class SamplerTemperatureTable:
                     if cell and cell.accuracy is not None:
                         row += f"{cell.accuracy:6.1%}({cell.n:>3})".rjust(12)
                     else:
-                        row += "—".rjust(12)
+                        row += "-".rjust(12)
                 lines.append(row)
         return "\n".join(lines)

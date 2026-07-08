@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Overnight queue 2026-06-10: (1) MMLU-Pro stratified-subset check, (2) cliff-edge ladder.
 # Sequential, one llama-server at a time. Gemma-3-12B needs parallel=4 / n_ctx=12288 (VRAM).
-# Each cell is resumable (id-keyed JSONL) — rerunning this script only fills gaps.
+# Each cell is resumable (id-keyed JSONL); rerunning this script only fills gaps.
 set -u
 cd "$(dirname "$0")/.."
 export LD_LIBRARY_PATH=/usr/local/cuda-13.0/lib64:${LD_LIBRARY_PATH:-}

@@ -1,4 +1,4 @@
-"""Deterministic answer parsers (SPEC §4.5, §5).
+"""Deterministic answer parsers.
 
 No LLM judge: every answer is extracted by literature-faithful regexes and compared by
 exact normalised match. Each parser returns a ``ParseResult`` that records *how* the
@@ -33,7 +33,7 @@ class ParseResult:
     """The outcome of running a parser on one raw completion."""
 
     answer: str | None  # normalised answer, or None if nothing parseable was found
-    method: str  # "strict" | "flexible" | "failed" — logged as the parse-path metric
+    method: str  # "strict" | "flexible" | "failed"; logged as the parse-path metric
 
     @property
     def ok(self) -> bool:
@@ -117,7 +117,7 @@ def parse_gpqa_letter(output: str) -> ParseResult:
     return _parse_mc_letter(output, "ABCD")
 
 
-# parser name (TaskSpec.parser) -> callable. Extended at M3/M4.
+# parser name (TaskSpec.parser) -> callable.
 _PARSERS: dict[str, Callable[[str], ParseResult]] = {
     "gsm8k_numeric": parse_gsm8k_numeric,
     "mmlu_pro_letter": parse_mmlu_pro_letter,

@@ -1,5 +1,5 @@
 # MMLU-Pro stratified-subset validation (2026-06-10). The frozen matrix's head-of-split
-# N=50 turned out to be 100% "business" (the test split is sorted by category — found in
+# N=50 turned out to be 100% "business" (the test split is sorted by category, found in
 # the shard audit). Within-matrix contrasts are unaffected (same items everywhere), but
 # this run checks the HEADLINE pattern on a category-stratified N=50 (3-4 items from each
 # of the 14 categories, deterministic round-robin pick): if the pure-temperature collapse

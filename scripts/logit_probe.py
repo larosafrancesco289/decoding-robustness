@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-"""Per-token next-token-distribution probe (the SQ4 mechanism analysis).
+"""Per-token next-token-distribution probe (the mechanism analysis).
 
-Hypothesis from DECOMP.txt: the temperature collapse is degeneration — one bad tail-token
+Hypothesis from DECOMP.txt: the temperature collapse is degeneration: one bad tail-token
 draw derails the sequence, and the per-token tail mass compounds over length. If so, the
 fragile model (Llama-3.1) should put systematically MORE probability mass in the tail of
 its next-token distribution along its own greedy path than robust models do, and the
@@ -142,7 +142,7 @@ def main() -> None:
                     entries = result.raw.get("completion_probabilities", [])
                     if not entries:
                         print(f"   !! {key}: no completion_probabilities "
-                              f"(parse_error_recovered={result.parse_error_recovered}) — skipped")
+                              f"(parse_error_recovered={result.parse_error_recovered}), skipped")
                         continue
                     stats = prompt_stats([position_probs(e) for e in entries])
                     if not stats:

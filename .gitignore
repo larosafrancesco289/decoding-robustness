@@ -6,12 +6,12 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Model weights (fetched by scripts/fetch_models.py; SHA256-pinned in DOWNLOADS.md)
+# Model weights (fetched by scripts/fetch_models.py; SHA256 pinned in DOWNLOADS.md)
 models/
 *.gguf
 *.safetensors
 
-# Local llama.cpp checkout + build (scripts/build_llamacpp.sh)
+# Local llama.cpp checkout and build (scripts/build_llamacpp.sh)
 /vendor/
 
 # Heavy run-time artifacts; the JSONL result shards ARE tracked
@@ -19,14 +19,12 @@ models/
 /results/**/*.bak
 .build_logs/
 
-# LaTeX build artifacts (tectonic regenerates main.pdf)
+# LaTeX build artifacts
 paper/*.aux
 paper/*.blg
 paper/*.bbl
 paper/*.log
-
-# Local editing snapshots of the paper
-paper/backup-*/
+paper/*.out
 
 # Editors / OS
 .vscode/
@@ -34,14 +32,6 @@ paper/backup-*/
 .DS_Store
 *.swp
 
-# Agent-local state — never commit
-.claude/
-
 # Secrets
 .env
 *.env
-
-# Internal live-status notes (kept out of the public artifact)
-/HANDOFF.md
-/PUBLISHING.md
-/SUBMIT.md

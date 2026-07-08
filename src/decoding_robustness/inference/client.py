@@ -1,4 +1,4 @@
-"""Thin HTTP client for the llama-server native ``/completion`` endpoint (SPEC §7).
+"""Thin HTTP client for the llama-server native ``/completion`` endpoint.
 
 We use the native endpoint (not the OpenAI-compatible one) so the sampler chain, seed,
 and per-method truncation params map straight onto the request, and the response carries
@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 import httpx
 
 # llama-server runs a chat/tool-call PEG parser over the generated text even on the native
-# /completion path, and it throws a 500 on degenerate token-salad — exactly what pure
+# /completion path, and it throws a 500 on degenerate token-salad, exactly what pure
 # temperature at high T produces, a result we must capture, not crash on. No server flag
 # disables this reliably. But the server embeds the full generated text in the error body
 # ("Failed to parse input at pos N: <text>"), so we recover it and return it as content.
@@ -22,7 +22,7 @@ _PARSE_ERROR_RE = re.compile(r"Failed to parse input at pos \d+:\s?(.*)", re.S)
 
 @dataclass
 class CompletionResult:
-    """One /completion response, with the fields the JSONL record needs (SPEC §7.1)."""
+    """One /completion response, with the fields the JSONL record needs."""
 
     content: str
     tokens_predicted: int
@@ -31,7 +31,7 @@ class CompletionResult:
     timings: dict = field(default_factory=dict)
     raw: dict = field(default_factory=dict)
     # True when the text was recovered from a server parse-error 500 (degenerate output).
-    # Such records have no token counts/timings — identifiable for analysis exclusion.
+    # Such records have no token counts/timings, identifiable for analysis exclusion.
     parse_error_recovered: bool = False
 
     @property

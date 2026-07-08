@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-"""M1 inference smoke test (SPEC §13): one model, one quant, a handful of completions.
+"""Inference smoke test: one model, one quant, a handful of completions.
 
 Runs each decoding method in the config against a live llama-server and prints the raw
-text side by side, so you can eyeball the M1 review gate:
+text side by side, so you can eyeball the sanity checks:
   * do top-p / min-p / top-nσ produce sane, *different* outputs?
   * does seed determinism hold under single-stream serving?
 
 This is the artifact you run on the GPU (after build_llamacpp.sh + fetch_models.py); it
-does no grading — that arrives at M2.
+does no grading; grading lives in src/decoding_robustness/tasks.
 
   export LLAMA_SERVER_BIN=vendor/llama.cpp/build/bin/llama-server
   uv run python scripts/smoke_m1.py --config configs/pilot_llama.yaml --quant Q4_K_M

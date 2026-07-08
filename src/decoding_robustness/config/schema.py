@@ -1,6 +1,6 @@
 """Pydantic schema for decoding-robustness experiment configs.
 
-Encodes the factorial design from SPEC.md §4 — model checkpoints, quantization
+Encodes the factorial design: model checkpoints, quantization
 levels, decoding methods, the (asymmetric) temperature grid, and tasks. This module
 is pure data + validation: no I/O, no model loading. The validators deliberately
 enforce the study's confound controls (e.g. a decoding method may only set its own
@@ -26,7 +26,7 @@ class QuantLevel(StrEnum):
 
 
 class DecodingMethod(StrEnum):
-    """The decoding methods under study (SPEC §4.2)."""
+    """The decoding methods under study."""
 
     GREEDY = "greedy"  # argmax, deterministic anchor (T=0)
     TEMPERATURE = "temperature"  # pure temperature scaling, no truncation
@@ -59,7 +59,7 @@ class Checkpoint(BaseModel):
     hf_repo: str  # GGUF repo, e.g. "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF"
     # level -> GGUF filename. Resolved at M1 when files are fetched; may be empty in M0.
     quant_files: dict[QuantLevel, str] = Field(default_factory=dict)
-    # None => render with the model's own tokenizer chat template (the default, SPEC §4.3).
+    # None => render with the model's own tokenizer chat template (the default).
     chat_template: str | None = None
 
     def gguf_filename(self, level: QuantLevel) -> str:
@@ -75,7 +75,7 @@ class Checkpoint(BaseModel):
 class SamplerSpec(BaseModel):
     """A decoding method with its (single) canonical parameter.
 
-    Temperature is intentionally NOT stored here — it is the shared swept axis
+    Temperature is intentionally NOT stored here; it is the shared swept axis
     (`ExperimentConfig.temperatures`), keeping method and temperature orthogonal.
     """
 
@@ -86,7 +86,7 @@ class SamplerSpec(BaseModel):
     top_k: int | None = Field(default=None, gt=0)
     min_p: float | None = Field(default=None, ge=0, le=1)
     top_n_sigma: float | None = Field(default=None, gt=0)
-    # Explicit llama-server sampler-chain order to pin (SPEC §4.2). None => runner default.
+    # Explicit llama-server sampler-chain order to pin. None => runner default.
     chain: list[str] | None = None
 
     @model_validator(mode="after")
@@ -128,7 +128,7 @@ class TaskSpec(BaseModel):
 
     name: str  # "gsm8k" | "mmlu_pro" | "gpqa_diamond"
     hf_dataset: str  # HF datasets id
-    revision: str  # pinned dataset revision (SPEC §4.5); "main" only until pre-registration
+    revision: str  # HF dataset revision; exact items and prompts are logged per record
     hf_config: str | None = None  # HF dataset config/subset name, if any
     split: str = "test"
     subset_size: int | None = Field(default=None, gt=0)  # None => full split
@@ -142,7 +142,7 @@ class TaskSpec(BaseModel):
 
 
 class ServerConfig(BaseModel):
-    """llama-server launch settings (SPEC §7)."""
+    """llama-server launch settings."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -152,14 +152,14 @@ class ServerConfig(BaseModel):
     n_ctx: int = Field(default=4096, gt=0)
     n_gpu_layers: int = -1  # -1 => offload all layers to GPU
     # Parallel slots / continuous batching. >1 boosts throughput but breaks bit-exactness
-    # (SPEC §7.3); 1 => deterministic single-stream.
+    # 1 => deterministic single-stream.
     parallel: int = Field(default=1, gt=0)
     # We render the official chat template client-side, which already emits the model's BOS
     # when the template calls for it (Llama/Mistral do, Qwen does not). llama-server's
-    # /completion path otherwise tokenizes with add_special=true and prepends *another* BOS
-    # — a double-BOS that drifts from the canonical training prompt. Overriding the model's
+    # /completion path otherwise tokenizes with add_special=true and prepends *another* BOS,
+    # a double-BOS that drifts from the canonical training prompt. Overriding the model's
     # add_bos metadata off makes server tokenization match HF apply_chat_template exactly,
-    # keeping the rendered+hashed prompt faithful (SPEC §4.3). Disable only to debug.
+    # keeping the rendered+hashed prompt faithful. Disable only to debug.
     disable_server_add_bos: bool = True
     extra_args: list[str] = Field(default_factory=list)
 
@@ -202,7 +202,7 @@ class ExperimentConfig(BaseModel):
         return self
 
     def decoding_conditions(self) -> Iterator[tuple[SamplerSpec, float]]:
-        """Yield (sampler, temperature) pairs per the asymmetric-grid rule (SPEC §4.1).
+        """Yield (sampler, temperature) pairs per the asymmetric-grid rule.
 
         Greedy is emitted exactly once at T=0; every other method is crossed with the
         full temperature grid (so we don't waste samples in the low-T region where all

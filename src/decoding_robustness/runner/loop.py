@@ -1,19 +1,19 @@
-"""Resumable generation loop (SPEC §7.2, §13/M2).
+"""Resumable generation loop.
 
 Given a *running* server client, a chat template, and a set of (sampler, temperature)
 conditions, this loops ``items × conditions × repetitions``, renders each prompt once,
-derives the paired seed, runs the completion, grades it, and appends a ``GenerationRecord``
-— skipping any id already on disk so the run is interruptible and resumable.
+derives the paired seed, runs the completion, grades it, and appends a ``GenerationRecord``,
+skipping any id already on disk so the run is interruptible and resumable.
 
-Throughput (SPEC §8): with ``concurrency > 1`` the loop keeps that many completions in
+Throughput: with ``concurrency > 1`` the loop keeps that many completions in
 flight against an N-slot llama-server (``--parallel N``), which is the batching lever.
 Requests run in worker threads (httpx.Client is thread-safe); grading and the JSONL append
 stay on the calling thread so the store is written by one writer and ``RunSummary`` is
-consistent. Batched serving is seed-logged but not bit-exact (SPEC §7.3) — accepted here.
+consistent. Batched serving is seed-logged but not bit-exact; accepted here.
 
-It is intentionally agnostic to *how many* conditions it is given: M2 passes a single
-greedy condition; M3 passes the full factorial expansion. Server lifecycle and matrix
-expansion live elsewhere (one server == one (model, quant) load, SPEC §8).
+It is intentionally agnostic to *how many* conditions it is given: the smoke drivers pass
+a single greedy condition; the matrix passes the full factorial expansion. Server lifecycle
+and matrix expansion live elsewhere (one server == one (model, quant) load).
 """
 
 from __future__ import annotations
@@ -100,10 +100,10 @@ def run_conditions(
     conditions = list(conditions)
 
     # Build the pending work. The prompt depends only on the item, so render (and hash) it
-    # once per item and reuse across conditions — keeps the paired design's prompt identical.
+    # once per item and reuse across conditions; this keeps the paired design's prompt identical.
     units: list[_WorkUnit] = []
     for item in items:
-        # enable_thinking defaults False — keeps Qwen3 out of thinking-mode (long outputs that
+        # enable_thinking defaults False, which keeps Qwen3 out of thinking-mode (long outputs that
         # blow the per-slot context budget); harmless for templates that don't reference it
         # (Llama/Mistral/Qwen2.5 ignore the kwarg). Set True only for the thinking-ON spot-check.
         rendered = template.render(
@@ -111,7 +111,7 @@ def run_conditions(
         )
         prompt_hash = prompt_sha256(rendered)
         for sampler, temperature in conditions:
-            # Greedy/T=0 is deterministic — one rep suffices; reps only reduce sampling noise
+            # Greedy/T=0 is deterministic, so one rep suffices; reps only reduce sampling noise
             # for stochastic methods. Avoids writing 3 identical greedy draws when repetitions>1.
             n_reps = 1 if temperature == 0.0 else repetitions
             for rep in range(1, n_reps + 1):

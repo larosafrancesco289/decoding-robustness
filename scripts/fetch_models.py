@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Fetch a GGUF checkpoint and record what we need to reproduce it (SPEC §7, §12).
+"""Fetch a GGUF checkpoint and record what we need to reproduce it.
 
 For each model file this:
   1. downloads the GGUF from its Hugging Face repo (Bartowski's imatrix quants),
@@ -7,7 +7,7 @@ For each model file this:
   3. extracts the embedded chat template + BOS/EOS tokens into a ``<file>.meta.json``
      sidecar, so prompts are rendered client-side from the model's own template.
 
-Usage (M1 canary):
+Usage:
   uv run python scripts/fetch_models.py \
       --repo bartowski/Meta-Llama-3.1-8B-Instruct-GGUF \
       --file Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf

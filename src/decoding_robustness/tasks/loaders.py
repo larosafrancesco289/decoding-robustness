@@ -1,14 +1,14 @@
-"""Task dataset loaders (SPEC §4.5).
+"""Task dataset loaders.
 
 Each loader turns a ``TaskSpec`` into a deterministic, ordered list of ``TaskItem``s:
 a stable ``item_id``, the user-message ``prompt`` (the content fed into the chat
 template, *before* rendering), and the normalised ``gold`` answer the grader compares
-against. Datasets are pulled from the HF hub at the spec's pinned ``revision`` so the
-item set is reproducible.
+against. Datasets are pulled from the HF hub at the spec's ``revision``, and the exact
+rendered prompt of every item is hashed and logged per generation record.
 
-Subsetting is deterministic head-of-split (first ``subset_size`` items). Stratified,
-pre-registered subsets arrive with the Phase-0 power analysis (SPEC §4.5); for the pilot
-the only requirement is that the same items appear across every condition, which a fixed
+Subsetting is deterministic head-of-split (first ``subset_size`` items), or a
+deterministic round-robin over categories for the stratified replication. Either way
+the same items appear across every condition, which a fixed
 revision + fixed slice guarantees.
 """
 
@@ -91,7 +91,7 @@ MCQ_PROMPT = (
     'Your response should end with "The answer is (X)" where X is the letter of the '
     "correct option."
 )
-# Option labels A.. — MMLU-Pro has up to ten options, GPQA exactly four.
+# Option labels A..; MMLU-Pro has up to ten options, GPQA exactly four.
 _OPTION_LETTERS = "ABCDEFGHIJ"
 
 
@@ -104,7 +104,7 @@ def _stratified_indices(categories: list[str], size: int) -> list[int]:
     """Deterministic stratified row pick: round-robin over categories in row order.
 
     Depth d takes the d-th row of every category (alphabetical category order) until
-    ``size`` rows are collected. No RNG — the pick is a pure function of the split.
+    ``size`` rows are collected. No RNG; the pick is a pure function of the split.
     """
     by_cat: dict[str, list[int]] = {}
     for i, cat in enumerate(categories):
@@ -172,7 +172,7 @@ def load_gpqa_diamond(task: TaskSpec) -> list[TaskItem]:
 
     GPQA ships one correct + three incorrect answers per question, not a pre-built MCQ. We
     assemble the four options and shuffle them with a per-question deterministic RNG (seeded
-    from the question text), so the option order — and therefore the gold letter — is stable
+    from the question text), so the option order, and therefore the gold letter, is stable
     across runs and identical across every decoding condition, yet not tied to row order.
     """
     dataset = load_dataset(

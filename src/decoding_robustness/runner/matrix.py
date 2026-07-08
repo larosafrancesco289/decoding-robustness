@@ -1,13 +1,13 @@
-"""Pilot matrix expansion (SPEC §8, §13/M3): loop (model, quant) server loads, and run
+"""Matrix expansion: loop (model, quant) server loads, and run
 the full decoding grid for every task through the resumable loop.
 
-Loop order minimises weight reloads: the outer loop is (checkpoint, quant) — one server
-load — and the sampler/temperature/task conditions are issued as request params against
+Loop order minimises weight reloads: the outer loop is (checkpoint, quant), one server
+load, and the sampler/temperature/task conditions are issued as request params against
 that single running server. Everything appends to one id-keyed JSONL, so the whole pilot
 is interruptible and resumable as a unit (an added quant or task just contributes new ids).
 
 Built to run *incrementally*: quants whose GGUF is not yet on disk are skipped (with a
-note), and tasks whose parser/loader is not yet registered are skipped — so the pilot can
+note), and tasks whose parser/loader is not yet registered are skipped, so the run can
 start on the quants already downloaded and widen as more arrive.
 """
 

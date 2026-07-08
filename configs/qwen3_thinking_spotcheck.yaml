@@ -59,6 +59,6 @@ server:
   host: 127.0.0.1
   port: 8080
   llama_cpp_commit: 5aba5364d959756c43eccc45596731e7b4eb3aa4
-  n_ctx: 20480              # 5120/slot at parallel=4 — room for long thinking traces
+  n_ctx: 20480              # 5120/slot at parallel=4, room for long thinking traces
   n_gpu_layers: -1
   parallel: 4              # lower than the matrix's 8 to widen the per-slot context budget

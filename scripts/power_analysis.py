@@ -2,7 +2,7 @@
 """Power / precision analysis for Phase-1 sizing (consumes a pilot JSONL).
 
 Purpose: from the Phase-0 pilot, decide the Phase-1 item count N (and sanity-check the
-rep count K) for the key comparisons of the study — *does quantization reorder the
+rep count K) for the key comparisons of the study: *does quantization reorder the
 temperature-robustness ranking of decoding strategies?*
 
 Honest caveats baked in:

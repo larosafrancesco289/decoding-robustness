@@ -1,10 +1,9 @@
-# Phase-1 full matrix (the main study). Design frozen 2026-06-02.
-# "Publication plan / sequencing".
+# Full matrix (the main study). Design frozen 2026-06-02.
 #
 # RQ (reframed from the pilot): *is the temperature-robustness ranking of decoding
 # strategies STABLE across quantization, and how large is the quant effect?* The pilot
 # showed the headline temperature effect is huge (well-powered at N=50) while the quant
-# effect is small (~5pp, unpowerable as an interaction) — so the contribution is the
+# effect is small (~5pp, unpowerable as an interaction), so the contribution is the
 # CROSS-MODEL stability result, which is why this matrix spans 5 model families/sizes.
 #
 # Run on a Slurm cluster (scripts/slurm/). For 4-wide array parallelism, target
@@ -52,7 +51,7 @@ checkpoints:
     family: qwen3
     params_b: 4.0
     hf_repo: bartowski/Qwen_Qwen3-4B-GGUF
-    # BF16 = the unquantized anchor (Qwen3-4B only) — the "no quantization" reference point
+    # BF16 = the unquantized anchor (Qwen3-4B only), the "no quantization" reference point
     # for the stability claim. Other models have no BF16 file, so the matrix skips it for them.
     quant_files:
       BF16: Qwen_Qwen3-4B-bf16.gguf
@@ -85,7 +84,7 @@ checkpoints:
       Q3_K_M: Qwen_Qwen3-1.7B-Q3_K_M.gguf
 
   # Cross-vendor disambiguator (added 2026-06-04). Qwen2.5 turned out robust like Qwen3, so
-  # the "generation-bound" framing collapses to "Qwen-lineage robust, Llama-3.1 fragile" —
+  # the "generation-bound" framing collapses to "Qwen-lineage robust, Llama-3.1 fragile",
   # n=1 per camp. Gemma-3 is a MODERN, non-Qwen, non-Llama vendor: if it's robust too, the
   # finding generalises to "modern models are temperature-robust, Llama-3.1 is the early-
   # fragile outlier" (cross-vendor). If it collapses, the claim shrinks to Qwen-specific.
@@ -104,7 +103,7 @@ checkpoints:
 # matrix skips (model,quant) pairs whose GGUF isn't present (so BF16 is a no-op except 4B).
 quant_levels: [BF16, Q8_0, Q6_K, Q4_K_M, Q3_K_M]
 
-# Same decoding grid as the pilot (SPEC §4.2). Classic methods at llama.cpp defaults; the two
+# Same decoding grid as the pilot. Classic methods at llama.cpp defaults; the two
 # method-defining samplers at their papers' recommended values; two temperature-LAST arms for
 # the min-p-critique ("fair fight") ablation (arXiv:2506.13681). See pilot_llama.yaml for the
 # per-value rationale.
@@ -135,7 +134,7 @@ tasks:
   - name: gsm8k
     hf_dataset: openai/gsm8k
     hf_config: main
-    revision: main          # TODO: pin to a commit at pre-registration freeze
+    revision: main          # exact items and prompts are logged per record
     split: test
     subset_size: 50
     max_new_tokens: 512
@@ -143,7 +142,7 @@ tasks:
 
   - name: mmlu_pro
     hf_dataset: TIGER-Lab/MMLU-Pro
-    revision: main          # TODO: pin
+    revision: main
     split: test
     subset_size: 50
     max_new_tokens: 1024
@@ -151,7 +150,7 @@ tasks:
 
 generation:
   global_seed: 0
-  repetitions: 3            # K=3 stochastic samples/item (greedy stays K=1 — deterministic).
+  repetitions: 3            # K=3 stochastic samples/item (greedy stays K=1, deterministic).
                             # The power analysis: N=50 nails the headline; reps reduce sampling
                             # noise for the stochastic comparisons. See scripts/power_analysis.py.
 

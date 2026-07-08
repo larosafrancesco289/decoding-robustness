@@ -1,7 +1,6 @@
-"""Analysis layer.
+"""Analysis layer: pure aggregation into accuracy tables.
 
-M3 adds the first sampler×quant accuracy table (pure aggregation). The GLMM interaction
-model, the Bayesian robustness check, and figures arrive at M4.
+Bootstrap statistics and figures live in scripts/ (stats_matrix.py, make_figures.py).
 """
 
 from __future__ import annotations

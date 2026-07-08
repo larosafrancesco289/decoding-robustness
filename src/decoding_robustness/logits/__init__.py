@@ -1,2 +1,2 @@
-"""Logits layer (SQ4): offline full-logit dump and logit-distribution analysis to test
-the logit-space (top-nσ) vs probability-space (top-p/min-p) asymmetry. Empty until SQ4."""
+"""Logits layer: reserved for offline logit-distribution analysis. The probe scripts
+(scripts/logit_probe.py, scripts/logit_probe2.py) query the server directly."""

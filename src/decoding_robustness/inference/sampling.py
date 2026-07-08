@@ -2,7 +2,7 @@
 
 This is where the study's confound controls become a concrete request: exactly one
 truncation method is active per condition, and the sampler chain order is pinned via
-the llama-server ``samplers`` array (SPEC §4.2).
+the llama-server ``samplers`` array.
 
 Chain-order decision (default): **temperature first, then the truncation method**, i.e.
 ``["temperature", "min_p"]``. Rationale:
@@ -13,11 +13,11 @@ Chain-order decision (default): **temperature first, then the truncation method*
     distribution, which is the temperature-adaptive behaviour the min-p paper relies on.
   * top-nσ is temperature-invariant by construction (it thresholds on logit std, and
     temperature scales max and std together), so its surviving set is unchanged by where
-    temperature sits — consistent with SPEC's logit-space-vs-prob-space framing (SQ4).
+    temperature sits.
 
 Note this departs from llama.cpp's *default* chain, which applies temperature last. The
-order is recorded per generation, can be overridden per sampler via ``SamplerSpec.chain``,
-and is a pre-registration decision to confirm at the M1/M3 gates — not yet frozen.
+order is recorded per generation and can be overridden per sampler via ``SamplerSpec.chain``;
+the temp-last ablation arms use exactly that override.
 """
 
 from __future__ import annotations

@@ -17,17 +17,17 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=24G
 #SBATCH -J cell
-# NB: these ICF GPU nodes are CPU-starved (12 CPUs / 8 GPUs on landonia + the A6000 node),
-# so keep --cpus-per-task small (4 here; override to 2 for the contended A6000 node at submit)
-# — the runner is GPU-bound, and a big CPU request blocks the node's other 7 GPUs / never
-# schedules. damnii 2080 Ti nodes have 40 CPUs and are usually idle.
+# NB: some GPU nodes are CPU-starved (12 CPUs shared by 8 GPUs on the A6000 node), so keep
+# --cpus-per-task small (4 here; override to 2 for the contended A6000 node at submit).
+# The runner is GPU-bound, and a big CPU request blocks the node's other 7 GPUs or never
+# schedules. The 2080 Ti nodes have 40 CPUs and are usually idle.
 
 set -e
 cd "${REPO_DIR:-$HOME/decoding-robustness}"
 module load cuda/13.1.1
 export LLAMA_SERVER_BIN="$PWD/vendor/llama.cpp/build/bin/llama-server"
 export HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 TOKENIZERS_PARALLELISM=false
-# ICF compute nodes export http_proxy=wwwcache.inf.ed.ac.uk:3128. httpx honours it, so the
+# The compute nodes export an http_proxy for outbound traffic. httpx honours it, so the
 # runner's GET http://127.0.0.1:PORT/health gets routed through the web proxy (which can't see
 # the node's localhost) and the server is never seen as healthy -> 300s timeout. We run fully
 # offline (local GGUFs + cached datasets), so just drop the proxy and bypass loopback.

@@ -2,7 +2,7 @@
 # Build a pinned llama.cpp (with CUDA) and expose the llama-server binary.
 #
 # The study needs a single, recorded build: the same commit decodes every condition, and
-# its SHA goes into the run manifest (SPEC §7, §12). This script clones/updates llama.cpp,
+# its SHA goes into the run manifest. This script clones/updates llama.cpp,
 # checks out a chosen ref, builds with CUDA, and prints the resolved commit to pin.
 #
 # Usage:
@@ -22,7 +22,7 @@ LLAMA_CPP_REF="${LLAMA_CPP_REF:-master}"
 CUDA_ARCH="${CUDA_ARCH:-native}"
 # CPU backend ISA. Default ON = -march=native (fine on a single box). On a heterogeneous
 # cluster set GGML_NATIVE=OFF for a portable baseline: a binary built with -march=native on a
-# new CPU (e.g. saxa's Xeon) SIGILLs on older nodes (the 2080 Ti damnii boxes). GPU does the
+# newer CPU SIGILLs on older nodes (such as the 2080 Ti boxes). GPU does the
 # heavy compute, so the generic CPU build's only cost is slightly slower sampling/tokenization.
 GGML_NATIVE="${GGML_NATIVE:-ON}"
 JOBS="${JOBS:-$(nproc)}"

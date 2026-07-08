@@ -3,8 +3,8 @@
 # (Llama-3.2-3B, nearest instruct text model in the 3.2 line) on the collapse axis only:
 # greedy + pure temperature, T ∈ {0.7, 1.0, 1.3}, Q8, both frozen N=50 tasks. Either
 # outcome is informative: fragility shared across the lineage -> a lineage property;
-# 3.0/3.2 robust -> 3.1 is checkpoint-specific. Reviewer-proofing for the
-# "you characterize one model" objection (Limitations already concedes it).
+# 3.0/3.2 robust -> 3.1 is checkpoint-specific. Either way it answers the
+# "you characterize one model" objection.
 #
 # Same shape as mmlu_strat_check.yaml; head-of-split subsets match the frozen matrix
 # so drops are comparable cell-for-cell with Table 1.

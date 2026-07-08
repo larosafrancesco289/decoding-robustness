@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-"""M2 task-e2e driver (SPEC §13): one model, one quant, GSM8K, greedy single-shot.
+"""Task end-to-end driver: one model, one quant, GSM8K, greedy single-shot.
 
 Loads a GSM8K subset at the config's pinned revision, launches llama-server for the
 chosen quant, runs greedy decoding over the items through the resumable loop, grades each
-with the deterministic numeric parser, appends JSONL records, and prints the M2 gate:
+with the deterministic numeric parser, appends JSONL records, and prints a check:
 
   * accuracy vs. the known Llama-3.1-8B-Instruct GSM8K number,
   * parse-failure rate,
@@ -52,7 +52,7 @@ def main() -> None:
     parser.add_argument("--task", default="gsm8k")
     parser.add_argument("--model-dir", default="models")
     parser.add_argument("--binary", default=None, help="llama-server path (or $LLAMA_SERVER_BIN)")
-    parser.add_argument("--limit", type=int, default=20, help="number of items (M2 default: 20)")
+    parser.add_argument("--limit", type=int, default=20, help="number of items (default: 20)")
     parser.add_argument(
         "--out", default=None, help="JSONL path (default: <output_dir>/m2_<quant>.jsonl)"
     )
@@ -66,7 +66,7 @@ def main() -> None:
     )
     quant = QuantLevel(args.quant)
     task = next(t for t in config.tasks if t.name == args.task)
-    # M2 uses the run's --limit, not the config subset_size (which is the full pilot size).
+    # Uses the run's --limit, not the config subset_size (which is the full pilot size).
     task = task.model_copy(update={"subset_size": args.limit})
 
     model_path = Path(args.model_dir) / ckpt.gguf_filename(quant)
@@ -121,13 +121,13 @@ def main() -> None:
         )
 
     print(RULE)
-    print("M2 GATE")
+    print("SANITY CHECK")
     print(f"  generated      : {summary.generated}  (skipped/resumed: {summary.skipped})")
     if summary.accuracy is not None:
         print(f"  accuracy       : {summary.correct}/{summary.generated} = {summary.accuracy:.1%}")
         print(f"  parse failures : {summary.parse_failures} ({summary.parse_failure_rate:.1%})")
     else:
-        print("  (nothing new generated — all items already on disk)")
+        print("  (nothing new generated; all items already on disk)")
 
 
 if __name__ == "__main__":

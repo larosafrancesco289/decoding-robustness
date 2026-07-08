@@ -1,13 +1,13 @@
-"""Generation record schema + append-only JSONL store (SPEC §7.1, §7.2).
+"""Generation record schema + append-only JSONL store.
 
 Every generation is one self-describing JSONL line. The record carries the full sample
 identity (model, quant, sampler, temperature, task, item, repetition) plus the rendered-
-prompt hash, the raw output, the graded result, and the length/throughput covariates —
+prompt hash, the raw output, the graded result, and the length/throughput covariates,
 so the JSONL alone reconstructs the run without the config.
 
-Resumability (SPEC §7.2): each record's ``id`` is a deterministic function of its identity
+Resumability: each record's ``id`` is a deterministic function of its identity
 tuple. ``RecordStore`` reads the ids already on disk and the runner skips them, so an
-interrupted run resumes from the JSONL and Phase 2 just appends new ids.
+interrupted run resumes from the JSONL and a later run just appends new ids.
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ def make_record_id(
 
 
 class GenerationRecord(BaseModel):
-    """One graded generation (SPEC §7.1). Append-only; one per JSONL line."""
+    """One graded generation. Append-only; one per JSONL line."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -65,7 +65,7 @@ class GenerationRecord(BaseModel):
     gold: str
     correct: bool
 
-    # Covariates (SPEC §5).
+    # Covariates.
     n_prompt_tokens: int
     n_completion_tokens: int
     latency_s: float | None = None
@@ -78,7 +78,7 @@ class GenerationRecord(BaseModel):
 
 
 class RecordStore:
-    """Append-only JSONL store with resumable id-skip (SPEC §7.2)."""
+    """Append-only JSONL store with resumable id-skip."""
 
     def __init__(self, path: str | Path):
         self.path = Path(path)
@@ -89,7 +89,7 @@ class RecordStore:
 
         Tolerant of a truncated/interleaved trailing line: a kill mid-write (concurrent
         appends from the batched runner) can leave a partial JSON line. We skip such lines
-        with a warning rather than crash the resume — the dropped samples just regenerate.
+        with a warning rather than crash the resume; the dropped samples just regenerate.
         """
         if not self.path.is_file():
             return set()

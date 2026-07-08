@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-"""M3 pilot driver (SPEC §13): run the (quant × decode-grid × task) matrix for the canary
-model and print the first sampler×quant accuracy table.
+"""Matrix driver: run the (quant × decode-grid × task) matrix for every configured
+model and print the sampler×quant accuracy table.
 
-Runs incrementally — quants not yet downloaded are skipped (and reported), tasks whose
+Runs incrementally: quants not yet downloaded are skipped (and reported), tasks whose
 parser isn't registered yet are skipped. Everything appends to one resumable JSONL, so
 re-running after more quants arrive just fills in the missing cells.
 
@@ -42,7 +42,7 @@ def main() -> None:
     parser.add_argument(
         "--only-model",
         default=None,
-        help="comma-separated checkpoint name(s) to run (default: all) — for Slurm array tasks",
+        help="comma-separated checkpoint name(s) to run (default: all), for Slurm array tasks",
     )
     parser.add_argument(
         "--only-quant",
@@ -123,7 +123,7 @@ def main() -> None:
     print(SamplerQuantTable.from_jsonl(out_path).render())
 
     print(RULE)
-    print("SAMPLER × TEMPERATURE ACCURACY (pooled over quant) — the SQ1 headline")
+    print("SAMPLER × TEMPERATURE ACCURACY (pooled over quant)")
     print(SamplerTemperatureTable.from_jsonl(out_path).render())
 
 
