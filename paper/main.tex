@@ -34,7 +34,7 @@
 \renewcommand{\dblfloatpagefraction}{0.85}
 \graphicspath{{../figures/}}
 
-\title{Temperature Kills Models, Not Answers:\\Decoding Robustness Is a Model Property}
+\title{Temperature Robustness Is a Model Property,\\Not a Sampler Choice}
 % Title alternatives:
 %   The cliff is the model: temperature robustness and the limits of sampler tuning
 %   Pick the model, not the sampler: temperature collapse is a model property
@@ -46,58 +46,62 @@
 
 \begin{abstract}
 Truncation samplers such as top-$p$, min-$p$, and top-$n\sigma$ exist to prevent the
-accuracy collapse of high-temperature sampling. We ask whether the collapse they guard
-against occurs in every model at deployment temperatures. In a single controlled
-pipeline, we run seven instruction-tuned models from five families (1.7B to 12B) across
-8 sampler arms, 4 quantization levels, and 2 tasks, for about 204{,}000 generations. At
-those temperatures ($T \le 1.3$), sampler choice barely matters in every family except
-Llama. Under plain temperature sampling at $T{=}1.3$, Llama-3.1-8B and Llama-3.2-3B lose
-34 to 41 accuracy points on GSM8K and MMLU-Pro, and Llama-3-8B loses 17 on MMLU-Pro; no
-model outside the family loses more than 8. The collapse is a termination failure. Generations
-derail midway and never reach an answer, but when a model does produce a well-formed
-answer, it is as accurate as under greedy decoding. A temperature ladder up to
-$T{=}2.0$ shows that every model collapses at some temperature, and truncation samplers
-begin to matter only past it. In a perturbation experiment, forcing one off-distribution
-token into the context multiplies a fragile model's chance of drawing another, so errors
-compound. Practitioners tuning a current model can leave the sampler alone.
+accuracy collapse of high-temperature sampling. Sampler evaluations compare one rule
+against another and take the collapse for granted. We ask whether it occurs in
+every model at temperatures used in deployment ($T \le 1.3$). In a single controlled
+pipeline, we run seven instruction-tuned models from five families across 8 sampler
+arms, 4 quantization levels, and 2 tasks. In that range, sampler choice barely matters
+in every family except Llama. Under plain temperature sampling at $T{=}1.3$,
+Llama-3.1-8B and Llama-3.2-3B lose 34 to 41 accuracy points on GSM8K and MMLU-Pro, and
+Llama-3-8B loses 17 on MMLU-Pro; no model outside the family loses more than 8. The
+collapse is a termination failure. Generations derail midway and never reach an answer,
+but when a model does produce a well-formed answer, it is as accurate as under greedy
+decoding. A temperature ladder up to $T{=}2.0$ shows that every model collapses at some
+temperature, and truncation samplers begin to matter only past it. Forcing one
+off-distribution token into the context multiplies a fragile model's chance of drawing
+another, so errors compound. Practitioners tuning a current model can leave the sampler
+alone.
 \end{abstract}
 
 \section{Introduction}
 
 Sampling is the default decoding choice for deployed language models
-\citep{shi2024decoding}. At each step the decoder draws the next token at random from
-the model's predicted distribution. The deterministic alternative, greedy decoding,
-returns one fixed continuation per prompt, and in open-ended text that continuation
-tends to be repetitive \citep{holtzman2020curious}. A temperature parameter scales the
-randomness of the draw. Raising it moves probability from the model's preferred tokens
-toward the rare ones in the tail of the distribution, where the model's probability
-estimates are least reliable, so a high-temperature draw can select a token that fits
-the context poorly \citep{holtzman2020curious,hewitt2022truncation}. The selected token
-then becomes context for every later step, and the continuation can degenerate into
-incoherent text.
+\citep{shi2024decoding}, and truncation samplers exist to make it safe at high
+temperature. They were designed for open-ended generation, where output variety is the
+goal \citep{zhou2024decoding}, but they are now also evaluated on tasks with one
+checkable answer. Min-$p$ reports accuracy gains over top-$p$ on GSM8K at high
+temperature \citep{nguyen2024minp}, and top-$n\sigma$ reports accuracy maintained up to
+$T{=}3.0$ \citep{tang2024topn}. Both results rest on the same premise, that raising the
+temperature eventually ruins every model's accuracy and a good sampler limits the
+damage. We test that premise at the temperatures deployments actually use and ask
+\textbf{whether the collapse is a property of decoding, or of the model}.
 
-Truncation samplers exist to prevent this degeneration by deleting the tail of the
-distribution before the draw, and the rules differ in where they cut. Top-$k$, nucleus
-(top-$p$), min-$p$, and top-$n\sigma$ sampling are the four we test, and
-Section~\ref{sec:related} describes each. All four were developed for open-ended
-generation, where output variety is the goal \citep{zhou2024decoding}, but sampling
-stays on in deployment, so the same samplers are now evaluated on tasks with one
-checkable answer. For example, min-$p$ reports accuracy gains over top-$p$ on GSM8K at
-high temperature \citep{nguyen2024minp}.
+At each step the decoder draws the next token at random from the model's predicted
+distribution, and a temperature parameter scales the randomness of the draw. Raising it
+moves probability from the model's preferred tokens toward the rare ones in the tail of
+the distribution, where the model's probability estimates are least reliable, so a
+high-temperature draw can select a token that fits the context poorly
+\citep{holtzman2020curious,hewitt2022truncation}. The selected token then becomes
+context for every later step, and the continuation can degenerate into incoherent text.
+Truncation samplers prevent this degeneration by deleting the tail of the distribution
+before the draw, and the rules differ in where they cut. Top-$k$, nucleus (top-$p$),
+min-$p$, and top-$n\sigma$ are the four we test, and Section~\ref{sec:related}
+describes each.
 
-Those accuracy claims drew a critique from \citet{schaeffer2025minp}, who asked
-whether any one sampler beats the others once statistical controls are in place.
-Whichever sampler wins that comparison, the comparison itself takes for granted that
-raising the temperature eventually ruins every model's accuracy, and asks only which
-sampler limits the damage. We test the premise and ask \textbf{whether the collapse is
-a property of decoding, or of the model}.
+The accuracy evidence has two problems. First, it generalizes from very few models.
+Top-$n\sigma$'s results come from a single model, Llama-3-8B \citep{tang2024topn}, and
+min-$p$'s main results from Mistral-7B \citep{nguyen2024minp}. Second, the gains are
+demonstrated at temperatures of 1.5 to 3, while deployed systems ship defaults between
+0.6 and 1.0 (Section~\ref{sec:setup}). \citet{schaeffer2025minp} reanalyzed min-$p$ and
+found the samplers hard to separate once each one receives an equal tuning budget, but
+the reanalysis still asks which sampler wins, and leaves the premise itself untouched.
 
 Across nine instruction-tuned models from five families, run through one controlled
 pipeline, the answer is the model. The six models outside the Llama family hold their
-accuracy at deployment temperatures under every sampler we test, staying within 8
-points of their low-temperature scores. Llama-3.1-8B and Llama-3.2-3B lose 34 to 41
-accuracy points under plain temperature sampling, and Llama-3-8B loses 17 on the longer
-task.
+accuracy at deployment temperatures ($T{\le}1.3$) under every sampler we test, staying
+within 8 points of their low-temperature scores. Llama-3.1-8B and Llama-3.2-3B lose 34
+to 41 accuracy points under plain temperature sampling, and Llama-3-8B, top-$n\sigma$'s
+test model, loses 17 on the longer task.
 
 Our contributions:
 \begin{itemize}
@@ -852,8 +856,8 @@ pooled over quantization.}
     each record stores the SHA-256 of the exact rendered prompt.
   \item \textbf{Quantizations.} Every quantized checkpoint is a Bartowski imatrix GGUF
     (one provider, one recipe, so the quantization axis is not confounded by recipe).
-    SHA-256 hashes of all 29 model files are pinned in the repository
-    (\texttt{DOWNLOADS.md} and per-file \texttt{.meta.json} sidecars).
+    SHA-256 hashes of all 31 model files are pinned in the repository
+    (\texttt{DOWNLOADS.md}).
   \item \textbf{Decoding.} Exactly one truncation parameter per request; the sampler
     chain order is pinned per arm and recorded in every record. Sampler values: top-$p$
     0.95, top-$k$ 40, min-$p$ 0.05, top-$n\sigma$ 1.0 (each method's recommended value).
