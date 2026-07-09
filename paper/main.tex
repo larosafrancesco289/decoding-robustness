@@ -76,8 +76,9 @@ temperature eventually ruins every model's accuracy and a good sampler limits th
 damage. We test that premise at the temperatures deployments actually use and ask
 \textbf{whether the collapse is a property of decoding, or of the model}.
 
-At each step the decoder draws the next token at random from the model's predicted
-distribution, and a temperature parameter scales the randomness of the draw. Raising it
+There is a good reason to expect the collapse. At each step the decoder draws the next
+token at random from the model's predicted distribution, and a temperature parameter
+scales the randomness of the draw. Raising it
 moves probability from the model's preferred tokens toward the rare ones in the tail of
 the distribution, where the model's probability estimates are least reliable, so a
 high-temperature draw can select a token that fits the context poorly
@@ -127,7 +128,7 @@ Our contributions:
     the cliff, above deployment temperatures (Section~\ref{sec:cliff}).
   \item \textbf{A mechanism signature.} A logit probe and a forced-token experiment
     locate the fragility after the first off-distribution token enters the context. One
-    injected tail token multiplies Llama's subsequent escape hazard 2.3-fold, and every
+    injected tail token multiplies Llama's chance of drawing another 2.3-fold, and every
     robust model absorbs it (Section~\ref{sec:mechanism}).
 \end{itemize}
 
