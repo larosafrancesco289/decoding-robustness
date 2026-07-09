@@ -423,8 +423,8 @@ Figure~\ref{fig:cliff} plots the accuracy trajectories, and Table~\ref{tab:cliff
 the exact drops against each model's own $T{=}0.7$ anchor. Every model turns out to have
 a cliff, and what distinguishes the models is where it sits. On GSM8K the three models
 collapse in their Figure~\ref{fig:collapse} order, with cliffs roughly 0.2 apart in
-temperature, and the confidence intervals separate as the ladder climbs: from $T{=}1.7$
-the three models' drops are pairwise disjoint. Within each model the cliff
+temperature. At $T{=}1.5$ Llama's drop is disjoint from the other two models', and at
+$T{=}1.7$ Qwen2.5's is disjoint from Gemma's. Within each model the cliff
 sits earlier on MMLU-Pro, the task with roughly twice the generation length, exactly what
 a compounding per-token derail risk predicts. There Llama has already collapsed at
 $T{=}1.3$, and Qwen2.5 and Gemma fall together at $T{=}1.5$.
@@ -552,7 +552,7 @@ continuations stay locally coherent, and Llama's reach the token cap no more oft
 its controls (14.0\% for both on GSM8K). The instability appears in the escape hazard
 over the 32 positions after the injection: Llama's rises to 2.3 times its baseline
 ($+0.0042$ per position), Mistral's to 1.35 times ($+0.0012$), and no robust model
-gains more than $+0.0014$. This per-model destabilization ranks the temperature drops
+gains more than $+0.0015$. This per-model destabilization ranks the temperature drops
 at $\rho = +0.86$ (the entropy increase, $+0.82$). It is the compounding loop
 anticipated in the introduction, measured directly. An off-distribution token in
 context raises the probability of drawing the next one, and the size of that rise is
