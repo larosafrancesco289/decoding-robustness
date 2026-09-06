@@ -36,6 +36,9 @@ checkpoints:
     hf_repo: bartowski/google_gemma-4-E4B-it-GGUF
     quant_files:
       Q8_0: google_gemma-4-E4B-it-Q8_0.gguf
+    # llama.cpp v0.4.0 forces add_bos_token=true for Gemma 4 (it ignores the --override-kv the
+    # runner passes), so the server prepends <bos> itself; render without one to keep a single BOS.
+    bos_token: ""
 
   - name: olmo-3-7b-instruct
     family: olmo3
@@ -81,3 +84,8 @@ server:
   n_ctx: 16384
   n_gpu_layers: -1
   parallel: 8
+  # The pinned 5aba5364 build had jinja off by default; v0.4.0 turns it on, which (a) fails at
+  # start-up on OLMo 3's tool-call template and (b) runs a PEG output parser on /completion that
+  # rejects cap-length degenerate streams with an HTTP 500 carrying no text (the runner records
+  # those as zero-token cap hits, as it does the pinned build's server-recovered streams).
+  extra_args: ["--no-jinja"]

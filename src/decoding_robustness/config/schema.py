@@ -62,6 +62,10 @@ class Checkpoint(BaseModel):
     quant_files: dict[QuantLevel, str] = Field(default_factory=dict)
     # None => render with the model's own tokenizer chat template (the default, SPEC §4.3).
     chat_template: str | None = None
+    # None => the sidecar's bos_token. "" renders the prompt without a BOS for engines that force
+    # their own (llama.cpp v0.4.0 overrides add_bos_token to true for Gemma 4, so the client-side
+    # BOS would be doubled); the server's forced BOS then gives the single BOS HF's template emits.
+    bos_token: str | None = None
 
     def gguf_filename(self, level: QuantLevel) -> str:
         try:

@@ -18,6 +18,9 @@ import httpx
 # disables this reliably. But the server embeds the full generated text in the error body
 # ("Failed to parse input at pos N: <text>"), so we recover it and return it as content.
 _PARSE_ERROR_RE = re.compile(r"Failed to parse input at pos \d+:\s?(.*)", re.S)
+# llama.cpp v0.4.0 (tag, 2026-09-04) rejects the same streams with this message and no text:
+# its PEG output parser fails on the invalid UTF-8 a cap-length degenerate stream ends in.
+_FORMAT_ERROR_RE = re.compile(r"The model produced output that does not match the expected .* format")
 
 
 @dataclass
@@ -54,9 +57,13 @@ def _recover_parse_error(resp: httpx.Response) -> CompletionResult | None:
         return None
     match = _PARSE_ERROR_RE.search(message)
     if match is None:
-        return None
+        if _FORMAT_ERROR_RE.search(message) is None:
+            return None
+        content = ""  # v0.4.0 does not return the text; the record is a zero-token cap hit
+    else:
+        content = match.group(1)
     return CompletionResult(
-        content=match.group(1),
+        content=content,
         tokens_predicted=0,
         tokens_evaluated=0,
         stopped=True,

@@ -42,3 +42,22 @@ def test_returns_none_for_non_json_body():
         500, text="<html>bad gateway</html>", request=httpx.Request("POST", "http://x/completion")
     )
     assert _recover_parse_error(resp) is None
+
+
+def test_recovers_v040_format_error_500_as_zero_token_record():
+    # llama.cpp v0.4.0 rejects the same degenerate streams with no text in the body.
+    resp = _resp(
+        500,
+        {
+            "error": {
+                "code": 500,
+                "message": "The model produced output that does not match the expected Content-only format",
+                "type": "server_error",
+            }
+        },
+    )
+    result = _recover_parse_error(resp)
+    assert result is not None
+    assert result.content == ""
+    assert result.parse_error_recovered is True
+    assert result.tokens_predicted == 0

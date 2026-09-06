@@ -59,3 +59,8 @@ server:
   n_ctx: 16384
   n_gpu_layers: -1
   parallel: 8
+  # Same as temp_sweep_2026.yaml: the pinned 5aba5364 build had jinja off by default; v0.4.0 turns it on, which (a) fails at
+  # start-up on OLMo 3's tool-call template and (b) runs a PEG output parser on /completion that
+  # rejects cap-length degenerate streams with an HTTP 500 carrying no text (the runner records
+  # those as zero-token cap hits, as it does the pinned build's server-recovered streams).
+  extra_args: ["--no-jinja"]

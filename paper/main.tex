@@ -61,7 +61,7 @@ sampling at $T{=}1.3$, Llama-3.1-8B and Llama-3.2-3B lose 30 to 38 accuracy poin
 Llama-3-8B loses 17 on the longer task, while no model outside the family loses more
 than 10. The loss is degeneration. Generations become incoherent, run on until the
 maximum token count, and never reach an answer, while the well-formed answers stay as
-accurate as under greedy decoding. The collapse replicates in native BF16 through a second inference engine, so
+accurate as under greedy decoding. The collapse replicates on both Llama checkpoints through a second inference engine, at native precision for Llama-3.2-3B, so
 neither the engine nor the quantization causes it. At the default temperatures no
 truncation rule gains more than 3 points on any robust model (8 at the 95\%
 upper limit); gains of 3 to 10 points appear only at $T{=}1.3$ on the models nearest
@@ -116,9 +116,9 @@ Our contributions:
     incoherent and run on until the token limit. Among Llama's generations that reach a well-formed answer at $T{=}1.3$,
     accuracy matches greedy decoding on the same items, so the lost generations are
     the ones that never reach an answer (Section~\ref{sec:degeneration}). The same
-    failure occurs under a second engine and at native precision, since Llama-3.2-3B collapses the same way
-    in native BF16 through HF transformers and as an unquantized GGUF
-    (Section~\ref{sec:replication}).
+    failure occurs under a second engine and at native precision: through HF transformers,
+    Llama-3.2-3B collapses the same way in native BF16 and Llama-3.1-8B in 8-bit, while
+    Qwen3-4B stays flat (Section~\ref{sec:replication}).
   \item \textbf{A conditional sampler benefit.} At the default temperatures no truncation rule
     gains more than 3 points on any robust model (8 at the 95\% upper limit). Gains
     appear only as a model approaches its cliff, the lowest temperature at which it
@@ -235,9 +235,11 @@ Appendix~\ref{app:quant} shows the drops level by level.
 chat template, token budgets, and parser, with the greedy baseline and plain temperature
 at the grid's three temperatures, $K{=}3$. The additional Llama evaluation adds two more Llama releases, Llama-3-8B \citep{meta2024llama3} and Llama-3.2-3B \citep{meta2024llama32},
 at Q8\_0 through the same engine. The engine and precision run repeats the axis through
-a second engine, HF transformers on the official BF16 weights with plain temperature
-sampling and no truncation or penalties, and through llama.cpp on the unquantized GGUF
-(Section~\ref{sec:replication}; settings and provenance in Appendix~\ref{app:engine}).
+a second engine, HF transformers, with plain temperature sampling and no truncation or
+penalties: Llama-3.2-3B on the official BF16 weights, Llama-3.1-8B in 8-bit integer
+weights, and Qwen3-4B in BF16 as a robust control; Llama-3.2-3B also runs through
+llama.cpp on the unquantized GGUF (Section~\ref{sec:replication}; settings and
+provenance in Appendix~\ref{app:engine}).
 
 \textbf{Statistical inference.} All confidence intervals come from a nonparametric
 bootstrap ($B{=}2000$; 5000 for the comparisons of Appendix~\ref{app:bound}) clustered
@@ -245,7 +247,7 @@ on task items. We resample the 50 items instead of
 individual generations, because the $K{=}3$ repetitions of one item share that item's
 difficulty and treating them as independent would understate the uncertainty. For every comparison in the grid, both configurations use the same items, so the bootstrap is paired.
 
-\textbf{Hardware and reproducibility.} The study totals about 207{,}000 graded
+\textbf{Hardware and reproducibility.} The study totals about 211{,}000 graded
 generations (Table~\ref{tab:design}). Hardware and the fixed llama.cpp commit are in Appendix~\ref{app:repro}; model-file
 hashes are in the repository's \texttt{DOWNLOADS.md}.
 
@@ -303,23 +305,30 @@ study. What sets them apart from the other four families is a question we discus
 
 Every grid result comes from one engine, llama.cpp, on imatrix GGUF quantizations from
 one provider, so a collapse could in principle be a property of the engine or of the
-conversion rather than of the model. We therefore repeat the temperature tests on the same fixed item set through a second engine and a second precision
-(Table~\ref{tab:engine}). Llama-3.2-3B, the smallest collapsing model, runs in native
-BF16 through HF transformers on the official weights and as the unquantized F16 GGUF
-through llama.cpp. The collapse replicates. In BF16 through transformers the model
-loses 40.0\,pp on GSM8K and 36.0 on MMLU-Pro (Q8 through llama.cpp: 38.0 and 36.7), 61
-and 92\% of its $T{=}1.3$ generations run to the cap (55 and 92\%), and the paired
-difference between the two engines' drops is $+2.0$ [$-9.3$, 12.7] on GSM8K and $-0.7$
-[$-9.3$, 8.0] on MMLU-Pro. The F16 GGUF loses 31.3 and 32.7. These runs replicate the
-drop and its failure pattern. They do not show that the two engines are equivalent, because
-the intervals on the difference span about 20\,pp. The prompt strings differ only by a
-date the Llama template stamps into its system header, which changes no token count
+conversion rather than of the model. We therefore repeat the temperature tests on the same fixed item set through a second
+engine, HF transformers, for both collapsing Llama checkpoints and for one robust control
+(Table~\ref{tab:engine}). Llama-3.2-3B runs in native BF16 on the official weights and,
+through llama.cpp, as the unquantized F16 GGUF; Llama-3.1-8B runs in 8-bit integer
+weights, the highest precision our 16\,GB card holds; Qwen3-4B runs in BF16. The collapse
+replicates on both Llama checkpoints and the control stays flat. In BF16 through
+transformers Llama-3.2-3B loses 40.0\,pp on GSM8K and 36.0 on MMLU-Pro (Q8 through
+llama.cpp: 38.0 and 36.7), 61 and 92\% of its $T{=}1.3$ generations run to the cap (55
+and 92\%), and the paired difference between the two engines' drops is $+2.0$ [$-9.3$,
+12.7] on GSM8K and $-0.7$ [$-9.3$, 8.0] on MMLU-Pro. The F16 GGUF loses 31.3 and 32.7.
+Llama-3.1-8B in INT8 loses 43.3 and 42.7 (Q8: 30.0 and 38.0), with 54 and 95\% of its
+$T{=}1.3$ generations at the cap; on GSM8K the INT8 drop exceeds the Q8 drop by 13.3
+[2.7, 24.0]. Qwen3-4B in BF16 moves by 1.3\,pp on GSM8K and 0.7 on MMLU-Pro, as in its
+Q8 and BF16 GGUF cells. These runs replicate the drop and its failure pattern. They do
+not show that the engines are equivalent: the intervals on the differences span about
+20\,pp, and the 8B GSM8K difference excludes zero. For Llama-3.2-3B the prompt strings
+differ only by a date its template stamps into the system header, which changes no
+token count; the other two arms reproduce every grid prompt hash
 (Appendix~\ref{app:engine}).
 
 \begin{table}[t]
 \centering
-\caption{Engine and precision replication of Llama-3.2-3B on the fixed items: the
-plain-temperature drop with its 95\% item-clustered bootstrap CI, and the run-to-cap
+\caption{Engine and precision replication on the fixed items, two collapsing Llama
+checkpoints and a robust control: the plain-temperature drop with its 95\% item-clustered bootstrap CI, and the run-to-cap
 rate at $T{=}1.3$ on GSM8K / MMLU-Pro. Full accuracy levels in
 Appendix~\ref{app:engine}.}
 \label{tab:engine}
@@ -513,7 +522,7 @@ larger or proprietary models share the Llama family's fragility is untested. Bot
 are English, zero-shot, and objective, with a single exactly checkable answer, which is
 what lets the parser measure degeneration. The original use case of truncation samplers, open-ended
 generation with no checkable answer, lies outside this design, so our bound on sampler
-gains does not extend to it. We replicate the results across engines and precisions only for Llama-3.2-3B. We compare samplers only in llama.cpp, at one setting per rule, so the bound applies to those settings and that engine. We have not repeated the sampler comparisons on the stratified subset. Quantization covers the tested llama.cpp formats only, all produced with the same conversion procedure. Thinking mode is off
+gains does not extend to it. We replicate the results across engines and precisions for two Llama checkpoints and one control only, and the Llama-3.1-8B replication runs in 8-bit rather than native precision. We compare samplers only in llama.cpp, at one setting per rule, so the bound applies to those settings and that engine. We have not repeated the sampler comparisons on the stratified subset. Quantization covers the tested llama.cpp formats only, all produced with the same conversion procedure. Thinking mode is off
 throughout the main grid; the thinking-on spot-check of Appendix~\ref{app:thinking}
 agrees on GSM8K but shows a 10\,pp MMLU-Pro drop [2, 20] at $N{=}25$, so our bound does
 not cover thinking mode.
@@ -723,6 +732,13 @@ as the grid. That template stamps the run date into the Llama system header (``T
 Date: 06 Sep 2026'' against ``04 Jul 2026'' in the July run), which is the only
 difference between the two runs' prompt strings. Re-rendering with the July date
 reproduces every lineage prompt hash, and the prompt token counts agree on every item.
+The Llama-3.1-8B configuration loads the \texttt{unsloth/Llama-3.1-8B-Instruct} mirror
+of the official weights (revision \texttt{4699cc75}) in 8-bit through bitsandbytes with
+the same generation settings, in batches of four, and stops on the same end-of-sequence
+set. The Qwen3-4B configuration loads \texttt{Qwen/Qwen3-4B} (revision
+\texttt{1cfa9a72}) in BF16 with thinking disabled in the template, as in the grid, in
+batches of eight, and stops on \texttt{<|im\_end|>} or \texttt{<|endoftext|>}. Both
+reproduce every grid prompt hash.
 The F16 GGUF configuration uses the grid's fixed llama.cpp build and settings
 (Appendix~\ref{app:repro}). llama.cpp reports zero completion tokens for a stream it
 recovered from a parse error on degenerate output; those count as cap hits here, as in
@@ -788,7 +804,8 @@ Table~\ref{tab:quantdrop} recomputes the plain-temperature drop of
 Table~\ref{tab:collapse} separately at each quantization level. Each cell pools 150
 generations ($N{=}50$, $K{=}3$), so single-level estimates are noisier than the pooled
 ones. The BF16 reference run on Qwen3-4B shows the same null drop as its quantized versions
-($-1.3$\,pp GSM8K, $-2.0$\,pp MMLU-Pro).
+($-1.3$\,pp GSM8K, $-2.0$\,pp MMLU-Pro), and so does its BF16 run through transformers
+($+1.3$, $-0.7$; Appendix~\ref{app:engine}).
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{fig5_quant}

@@ -14,7 +14,7 @@ start on the quants already downloaded and widen as more arrive.
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from ..config.schema import Checkpoint, ExperimentConfig
@@ -41,7 +41,10 @@ def _resolve_template(ckpt: Checkpoint, model_path: Path) -> ChatTemplate:
         return ChatTemplate(template=ckpt.chat_template)
     meta_path = model_path.with_suffix(model_path.suffix + ".meta.json")
     if meta_path.is_file():
-        return ChatTemplate.from_meta_file(meta_path)
+        template = ChatTemplate.from_meta_file(meta_path)
+        if ckpt.bos_token is not None:
+            template = replace(template, bos_token=ckpt.bos_token)
+        return template
     raise FileNotFoundError(
         f"no chat template for {ckpt.name}: set Checkpoint.chat_template or fetch "
         f"{model_path.name} (fetch_models.py writes {meta_path.name})"

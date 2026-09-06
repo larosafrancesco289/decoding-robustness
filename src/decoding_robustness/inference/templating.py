@@ -70,6 +70,9 @@ class ChatTemplate:
         """Render ``messages`` to the exact prompt string fed to /completion."""
         env = _build_env()
         compiled = env.from_string(self.template)
+        # HF apply_chat_template renders with tools=None; templates that test `tools is none`
+        # (OLMo 3) fail on an Undefined, and the ones that test truthiness render identically.
+        extra.setdefault("tools", None)
         return compiled.render(
             messages=messages,
             bos_token=self.bos_token,
