@@ -35,10 +35,10 @@
 \renewcommand{\dblfloatpagefraction}{0.85}
 \graphicspath{{../figures/}}
 
-\title{Temperature Fragility in Instruction-Tuned Language Models}
-% Provisional (outcome a of the 2026 panel). If Hermes-3 collapses: "Temperature Fragility Across Llama-3
-% Post-Training Pipelines"; if a 2026 model collapses: "Temperature Fragility and the Conditional Benefits of
-% Truncation Sampling".
+\title{Temperature Fragility and the Conditional Benefits of Truncation Sampling}
+% Outcome c of the prespecified title rule (2026-09-06): Qwen3.5-9B, a 2026 release, trips the panel flag.
+% Earlier candidates: "Temperature Fragility in Instruction-Tuned Language Models" (no panel model fragile);
+% "Temperature Fragility Across Llama-3 Post-Training Pipelines" (only Hermes-3 fragile).
 % Title alternatives:
 %   The cliff is the model: temperature robustness and the limits of sampler tuning
 %   Pick the model, not the sampler: temperature collapse is a model property
@@ -54,12 +54,16 @@ accuracy collapse of high-temperature sampling, and their evidence comes from
 temperatures where every model has already collapsed. We ask how instruction-tuned
 models behave at the temperatures deployments use, from the default temperatures of 0.6 to
 1.0 up to a test temperature of $T{=}1.3$ above that range, and when a truncation rule changes the outcome. In
-one controlled pipeline we run nine models from five families across eight decoding
+one controlled pipeline we run seven models from five families across eight decoding
 configurations, four quantization levels, and two tasks with a checkable answer, GSM8K and
-MMLU-Pro. Temperature sensitivity varies sharply by model. Under plain temperature
-sampling at $T{=}1.3$, Llama-3.1-8B and Llama-3.2-3B lose 30 to 38 accuracy points and
-Llama-3-8B loses 17 on the longer task, while no model outside the family loses more
-than 10. The loss is degeneration. Generations become incoherent, run on until the
+MMLU-Pro, and the temperature tests alone on six more models. Temperature sensitivity
+varies sharply by model. Under plain temperature sampling at $T{=}1.3$, Llama-3.1-8B and
+Llama-3.2-3B lose 30 to 38 accuracy points and Llama-3-8B loses 17 on the longer task,
+while no other model in the grid loses more than 10. The fragility is not confined to
+that family: on a follow-up panel, three of four further models lose 17 to 29 points on
+the longer task, Hermes-3, a different post-training of the same Llama-3.1-8B base,
+Qwen3.5-9B, a 2026 release, and OLMo-3-7B, while Gemma-4-E4B stays within 5 points. The
+loss is degeneration. Generations become incoherent, run on until the
 maximum token count, and never reach an answer, while the well-formed answers stay as
 accurate as under greedy decoding. The collapse replicates on both Llama checkpoints through a second inference engine, at native precision for Llama-3.2-3B, so
 neither the engine nor the quantization causes it. At the default temperatures no
@@ -98,11 +102,15 @@ min-$p$'s main results from Mistral-7B \citep{nguyen2024minp}. Second, the gains
 demonstrated at temperatures of 1.5 to 3, while deployed systems set defaults between
 0.6 and 1.0 (Section~\ref{sec:setup}). 
 
-Across nine instruction-tuned models from five families, run through one controlled
-pipeline, temperature sensitivity inside that range turns out to be a property of the
-model. Six models lose no more than 10 points at $T{\le}1.3$ under every sampler we
-test. Llama-3.1-8B and Llama-3.2-3B lose 30 to 38 points under plain temperature
-sampling, and Llama-3-8B, top-$n\sigma$'s test model, loses 17 on the longer task.
+Across thirteen instruction-tuned models from eight families, run through one
+controlled pipeline, temperature sensitivity inside that range turns out to be a property
+of the model. Six grid models lose no more than 10 points at $T{\le}1.3$ under every
+sampler we test. Llama-3.1-8B and Llama-3.2-3B lose 30 to 38 points under plain
+temperature sampling, and Llama-3-8B, top-$n\sigma$'s test model, loses 17 on the longer
+task. A follow-up panel shows that the fragility is not a Llama peculiarity: Hermes-3, a
+different post-training of the same Llama-3.1-8B base, loses 19 on that task,
+Qwen3.5-9B, a 2026 release, loses 29, and OLMo-3-7B loses 17; only Gemma-4-E4B stays
+flat.
 
 Our contributions:
 \begin{itemize}
@@ -110,8 +118,10 @@ Our contributions:
     instruction-tuned models, four GGUF quantization levels, eight decoding configurations, and
     $T \in \{0.7, 1.0, 1.3\}$ on GSM8K and MMLU-Pro ($N{=}50$ items, $K{=}3$
     repetitions), 185{,}600 generations, plus the same temperature tests on two further
-    Llama releases, with item-clustered bootstrap CIs on every main estimate. Every model that loses more than 10 points is a Llama-3 release
-    (Section~\ref{sec:modelbound}).
+    Llama releases and a four-model follow-up panel, with item-clustered bootstrap CIs on
+    every main estimate. In the grid, every model that loses more than 10 points is a
+    Llama-3 release; in the panel, three of four models (a re-post-trained Llama-3.1,
+    Qwen3.5-9B, and OLMo-3-7B) lose 17 to 29 on MMLU-Pro (Section~\ref{sec:modelbound}).
   \item \textbf{A replicated failure pattern.} During the collapse, generations become
     incoherent and run on until the token limit. Among Llama's generations that reach a well-formed answer at $T{=}1.3$,
     accuracy matches greedy decoding on the same items, so the lost generations are
@@ -231,9 +241,11 @@ primary precision for every temperature result in Section~\ref{sec:modelbound}; 
 sampler comparisons of Section~\ref{sec:spread} pool the four levels, and
 Appendix~\ref{app:quant} shows the drops level by level.
 
-\textbf{Replication runs.} Two temperature-only runs reuse the grid's fixed items,
-chat template, token budgets, and parser, with the greedy baseline and plain temperature
-at the grid's three temperatures, $K{=}3$. The additional Llama evaluation adds two more Llama releases, Llama-3-8B \citep{meta2024llama3} and Llama-3.2-3B \citep{meta2024llama32},
+\textbf{Replication runs.} Three temperature-only runs reuse the grid's fixed items,
+chat templates, token budgets, and parser, with the greedy baseline and plain temperature
+at the grid's three temperatures, $K{=}3$. The follow-up panel runs four further models
+at Q8\_0 on a later llama.cpp release, bridged to the grid's build on two grid models
+(Section~\ref{sec:modelbound}; bridge in Section~\ref{sec:replication}). The additional Llama evaluation adds two more Llama releases, Llama-3-8B \citep{meta2024llama3} and Llama-3.2-3B \citep{meta2024llama32},
 at Q8\_0 through the same engine. The engine and precision run repeats the axis through
 a second engine, HF transformers, with plain temperature sampling and no truncation or
 penalties: Llama-3.2-3B on the official BF16 weights, Llama-3.1-8B in 8-bit integer
@@ -247,7 +259,7 @@ on task items. We resample the 50 items instead of
 individual generations, because the $K{=}3$ repetitions of one item share that item's
 difficulty and treating them as independent would understate the uncertainty. For every comparison in the grid, both configurations use the same items, so the bootstrap is paired.
 
-\textbf{Hardware and reproducibility.} The study totals about 213{,}000 graded
+\textbf{Hardware and reproducibility.} The study totals about 217{,}000 graded
 generations (Table~\ref{tab:design}). Hardware and the fixed llama.cpp commit are in Appendix~\ref{app:repro}; model-file
 hashes are in the repository's \texttt{DOWNLOADS.md}.
 
@@ -267,8 +279,8 @@ strict parse, Section~\ref{sec:setup}).
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.72\textwidth]{fig1_collapse}
-\caption{Plain-temperature accuracy drop $T0.7 \to T1.3$ at Q8\_0 for the seven grid models and the two additional Llama releases; points with 95\% item-clustered bootstrap CIs. Llama-3 releases in orange.}
+\includegraphics[width=0.58\textwidth]{fig1_collapse}
+\caption{Plain-temperature accuracy drop $T0.7 \to T1.3$ at Q8\_0 for the seven grid models, the two additional Llama releases, and the follow-up panel; points with 95\% item-clustered bootstrap CIs. Llama-3-based models in orange.}
 \label{fig:collapse}
 \end{figure*}
 
@@ -296,9 +308,30 @@ A single collapsing checkpoint could still be an effect specific to that release
 Llama-3.1-8B ($+38.0\,$pp on GSM8K, $+36.7$ on MMLU-Pro) and with the same
 degeneration pattern, with its run-to-cap rate rising by 55 and 82 points. Llama-3-8B lies
 between the two, with no measurable drop on GSM8K and $+16.7\,$pp on MMLU-Pro, the
-longer task, a larger drop than any non-Llama model shows. Every model that loses more than 10 points is a
-Llama-3 release, and the three releases produce the three largest MMLU-Pro drops in the
-study. What sets them apart from the other four families is a question we discuss in Section~\ref{sec:discussion}.
+longer task, a larger drop than any grid model outside the family shows. Within the grid, every model that loses more than 10 points is a Llama-3 release, and
+the three releases produce its three largest MMLU-Pro drops.
+
+\textbf{Follow-up panel.} To ask whether the collapse follows the Llama-3 base or its
+post-training, and whether later models share it, we run the temperature tests,
+unchanged, on four more models at Q8\_0: Hermes-3-Llama-3.1-8B
+\citep{teknium2024hermes3}, a different post-training of the fragile flagship's base;
+Qwen3.5-9B \citep{qwen2026qwen35} and Gemma-4-E4B \citep{google2026gemma4}, two widely
+used 2026 releases; and OLMo-3-7B \citep{ai2025olmo3}, a fully open model. We fixed the
+flag before the run: a plain-temperature drop of at least 15\,pp, a run-to-cap rise of at
+least 20, or a strict-parse fall of at least 20, on either task. Three models trip it, all
+on MMLU-Pro, the longer task (Table~\ref{tab:collapse}, Figure~\ref{fig:collapse}). Hermes-3 loses
+12.0\,pp on GSM8K and 19.3 on MMLU-Pro, with the Llama pattern in a milder form: its
+run-to-cap rate rises by 9 and 38 points, its cap hits are incoherent, and its
+well-formed answers keep their $T{=}0.7$ accuracy. Post-training changes the size of the
+collapse on the same base; it does not remove it. Qwen3.5-9B loses 9.3 on GSM8K and 28.7
+on MMLU-Pro, the first non-Llama model in the study to lose more than 10 points. Its
+failure is degeneration too, but some of its incoherent streams stop before the budget,
+so the run-to-cap rise (13 points) understates it and the strict-parse fall (31 points)
+carries the signal; half of its $T{=}1.3$ MMLU-Pro generations reach no answer. OLMo-3-7B loses 7.3 on GSM8K and 17.3 on
+MMLU-Pro, where its run-to-cap rate rises by 21 points and its strict-parse rate falls
+by 26, from a low baseline (39\% at $T{=}0.7$). Gemma-4-E4B alone stays flat, losing 2.7
+and 4.7. What sets the fragile models apart is a question we discuss in
+Section~\ref{sec:discussion}.
 
 \subsection{Replication across item sets and implementations}
 \label{sec:replication}
@@ -307,21 +340,20 @@ Every grid result comes from one engine, llama.cpp, on imatrix GGUF quantization
 one provider, so a collapse could in principle be a property of the engine or of the
 conversion rather than of the model. We therefore repeat the temperature tests on the same fixed item set through a second
 engine, HF transformers, for both collapsing Llama checkpoints and for one robust control
-(Table~\ref{tab:engine}). Llama-3.2-3B runs in native BF16 on the official weights and,
-through llama.cpp, as the unquantized F16 GGUF; Llama-3.1-8B runs in 8-bit integer
-weights, the highest precision our 16\,GB card holds; Qwen3-4B runs in BF16. The collapse
-replicates on both Llama checkpoints and the control stays flat. In BF16 through
+(Table~\ref{tab:engine}): Llama-3.2-3B in native BF16 on the official weights and, through
+llama.cpp, as the unquantized F16 GGUF; Llama-3.1-8B in 8-bit integer weights, the most
+our 16\,GB card holds; Qwen3-4B in BF16. The collapse replicates on both Llama
+checkpoints and the control stays flat. In BF16 through
 transformers Llama-3.2-3B loses 40.0\,pp on GSM8K and 36.0 on MMLU-Pro (Q8 through
 llama.cpp: 38.0 and 36.7), with 61 and 92\% of its $T{=}1.3$ generations at the cap, and
 the paired difference between the two engines' drops is $+2.0$ [$-9.3$, 12.7] on GSM8K
 and $-0.7$ [$-9.3$, 8.0] on MMLU-Pro. Llama-3.1-8B in INT8 loses 43.3 and 42.7 (Q8: 30.0
 and 38.0); on GSM8K the INT8 drop exceeds the Q8 drop by 13.3
 [3.3, 23.3]. Qwen3-4B in
-BF16 moves by 1.3\,pp and 0.7, as in its GGUF cells. These runs replicate the drop and its failure pattern. They do
-not show that the engines are equivalent: the intervals on the differences span about
-20\,pp, and the 8B GSM8K difference excludes zero. For Llama-3.2-3B the prompt strings
-differ only by a date its template stamps into the system header, which changes no
-token count; the other two arms reproduce every grid prompt hash
+BF16 moves by 1.3\,pp and 0.7, as in its GGUF cells. These runs replicate the drop and its failure pattern; they do
+not show that the engines are equivalent, since the intervals on the differences span
+about 20\,pp and the 8B GSM8K difference excludes zero. Prompt strings match the grid's
+on every item, up to a date stamp in the Llama-3.2 template that changes no token count
 (Appendix~\ref{app:engine}).
 
 The 2026 panel (Section~\ref{sec:modelbound}) needs a later llama.cpp release than the
@@ -359,7 +391,7 @@ Appendix~\ref{app:decomp}).
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.78\textwidth]{fig2_decomposition}
+\includegraphics[width=0.58\textwidth]{fig2_decomposition}
 \caption{Overall accuracy (solid) versus accuracy among well-formed, strict-parsed answers
 (dashed) under plain temperature sampling; four models with different levels of temperature sensitivity (the three Qwen3 models maintain stable accuracy and are omitted for legibility). The dashed lines never fall. Among well-formed answers accuracy holds, and Llama's rises because its completed answers come from easier items (Section~\ref{sec:degeneration}).}
 \label{fig:decomposition}
@@ -417,14 +449,16 @@ preserves more accuracy at $T{=}1.3$
 temperature, we test $T \in
 \{1.3, 1.5, 1.7, 2.0\}$ on three models spanning the gradient of Figure~\ref{fig:collapse}:
 Llama-3.1-8B, Qwen2.5-7B, and Gemma-3-12B (Q8, both tasks, $N{=}50$, $K{=}3$).
-Figure~\ref{fig:cliff} and Table~\ref{tab:cliff} give the accuracy at each temperature
+Table~\ref{tab:cliff} and Figure~\ref{fig:cliff} (Appendix~\ref{app:hight}) give the accuracy at each temperature
 and the drops against each model's own $T{=}0.7$ baseline. All three reach a cliff inside
 the tested range, at different temperatures. Taking the cliff as the lowest tested
 temperature at which a model loses more than half its $T{=}0.7$ accuracy, the three models collapse on GSM8K in their Figure~\ref{fig:collapse} order:
 Llama at 1.5, Qwen2.5 at 1.7, and Gemma at 2.0. At $T{=}1.5$ the CI of Llama's drop does not overlap the other two models', and at
 $T{=}1.7$ Qwen2.5's does not overlap Gemma's. Within each model the cliff
-comes at a lower temperature on MMLU-Pro, the task with roughly twice the generation length, as expected if each generated token carries a risk of making the continuation incoherent and that risk accumulates over a longer generation. There Llama has already collapsed at
-$T{=}1.3$, and Qwen2.5 and Gemma both collapse at $T{=}1.5$.
+comes at a lower temperature on MMLU-Pro, the task with roughly twice the generation
+length, as expected if the risk of losing coherence accumulates per generated token:
+there Llama has already collapsed at $T{=}1.3$, and Qwen2.5 and Gemma both collapse at
+$T{=}1.5$.
 
 Truncation raises the cliff temperature, and the more tokens a rule excludes the more it
 raises it: top-$p$ raises the cliff by about 0.2, min-$p$ keeps 70\% accuracy at
@@ -435,43 +469,7 @@ accuracy coincides with a sharp fall in well-formed answers. This reconciles the
 top-$n\sigma$ are validated at temperatures of 1.5 to 3 \citep{nguyen2024minp,tang2024topn},
 above every model's deployment range, where they do improve accuracy (Appendix~\ref{app:hight}). 
 
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.78\textwidth]{fig3_cliff}
-\caption{Cliff temperatures. Accuracy versus temperature per sampler (the $T \le 1.0$
-points come from the main grid; all at Q8). Each model has a cliff, at a temperature that
-differs by model. Truncation raises each model's cliff temperature.}
-\label{fig:cliff}
-\end{figure*}
 
-\begin{table}[t]
-\centering
-\caption{Higher-temperature series: accuracy drop against each model's own $T{=}0.7$
-baseline under plain temperature (pp, 95\% item-clustered bootstrap CIs; Q8). The series
-is a separate run from the main grid; its $T{=}1.3$ step differs from
-Table~\ref{tab:collapse} by amounts within the CIs (Appendix~\ref{app:repro}).}
-\label{tab:cliff}
-\footnotesize
-\setlength{\tabcolsep}{2pt}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{lccc}
-\toprule
-$T$ & Llama-3.1-8B & Qwen2.5-7B & Gemma-3-12B \\
-\midrule
-\multicolumn{4}{l}{\emph{GSM8K}} \\
-1.3 & $+32.7$ [24.7, 41.3] & $+4.0$ [$-0.7$, 9.3] & $+2.7$ [$-2.0$, 8.0] \\
-1.5 & $+68.0$ [58.0, 76.7] & $+24.0$ [15.3, 33.3] & $+14.7$ [8.7, 21.3] \\
-1.7 & $+76.0$ [66.7, 84.7] & $+70.0$ [62.0, 77.3] & $+42.7$ [34.7, 50.7] \\
-2.0 & $+77.3$ [67.3, 86.0] & $+90.7$ [82.7, 97.3] & $+84.0$ [76.7, 90.7] \\
-\midrule
-\multicolumn{4}{l}{\emph{MMLU-Pro}} \\
-1.3 & $+44.7$ [34.0, 56.0] & $+8.0$ [0.0, 16.7] & $+3.3$ [$-3.3$, 10.0] \\
-1.5 & $+46.0$ [35.3, 57.3] & $+40.0$ [28.7, 52.0] & $+39.3$ [29.3, 48.7] \\
-1.7 & $+48.0$ [36.7, 60.0] & $+61.3$ [48.7, 74.0] & $+57.3$ [45.3, 68.0] \\
-2.0 & $+48.0$ [36.7, 59.3] & $+65.3$ [53.3, 78.0] & $+63.3$ [51.3, 75.3] \\
-\bottomrule
-\end{tabular}}
-\end{table}
 
 \section{Discussion and conclusion}
 \label{sec:discussion}
@@ -481,8 +479,9 @@ model. On a robust one every configuration we test stays within 10 points and mo
 within 3; on a fragile one accuracy varies by 42 points across the same configurations. The fragility can be screened for
 before deployment. On the fifty fixed items, the drop in strict-parse rate and the rise
 in run-to-cap rate between $T{=}0.7$ and 1.3 separate the fragile models from the robust
-ones in every run of this study (Table~\ref{tab:collapse}); we have not validated the
-rule on models outside it. In production, an incoherent generation carries no well-formed
+ones in every run of this study (Table~\ref{tab:collapse}), including the follow-up
+panel, run after the rule was written: its three flagged models show strict-parse falls
+of 26 to 36 points, its unflagged one a fall of 6. In production, an incoherent generation carries no well-formed
 answer, so a check on the answer format catches it, while the rate of well-formed but
 wrong answers changes little.
 
@@ -497,13 +496,15 @@ seven grid models' drops at Spearman $\rho = +0.93$, yet neither separates Llama
 from Mistral, which is robust. A forced tail token does. Inserting the token ranked twentieth by probability into text generated with greedy decoding multiplies Llama's probability of subsequently sampling a low-probability token 2.3-fold, while no
 robust model's rises by more than $+0.0015$ per position. With seven models and one
 injection configuration these probes check the loss-of-coherence account for
-consistency and do not test it causally, and what sets a model's cliff remains open.
+consistency; they do not test it causally.
 
-Across nine models from five families, the choice of truncation sampler matters far less
-at deployment temperatures than the model's own temperature sensitivity. Robust models
-lose at most a few points under every sampler we test, while two Llama generations lose
-up to 38 points under plain temperature and a third loses 17 on the longer task, in two
-engines and at every precision we tried. Each model we test above the deployment range
+Across thirteen models from eight families, the choice of truncation sampler matters
+far less at deployment temperatures than the model's own temperature sensitivity. Robust
+models lose at most a few points under every sampler we test, while two Llama
+generations lose up to 38 points under plain temperature and a third loses 17 on the
+longer task, in two engines and at every precision we tried, and a follow-up panel finds
+the same failure on the longer task in three of four further models (17 to 29 points),
+with Gemma-4-E4B the exception. Each model we test above the deployment range
 collapses at its own temperature, Llama already inside that range; truncation raises that
 temperature but changes little below it. These results argue for screening temperature
 fragility before deployment rather than tuning the sampler after it.
@@ -527,7 +528,7 @@ larger or proprietary models share the Llama family's fragility is untested. Bot
 are English, zero-shot, and objective, with a single exactly checkable answer, which is
 what lets the parser measure degeneration. The original use case of truncation samplers, open-ended
 generation with no checkable answer, lies outside this design, so our bound on sampler
-gains does not extend to it. We replicate the results across engines and precisions for two Llama checkpoints and one control only, and the Llama-3.1-8B replication runs in 8-bit rather than native precision. We compare samplers only in llama.cpp, at one setting per rule, so the bound applies to those settings and that engine. We have not repeated the sampler comparisons on the stratified subset. Quantization covers the tested llama.cpp formats only, all produced with the same conversion procedure. Thinking mode is off
+gains does not extend to it. We replicate the results across engines and precisions for two Llama checkpoints and one control only, and the Llama-3.1-8B replication runs in 8-bit rather than native precision. The follow-up panel runs plain temperature only, at Q8\_0, through a later llama.cpp release bridged on two grid models, and its token budgets are the grid's, which cut off a quarter of Qwen3.5-9B's coherent MMLU-Pro generations. We compare samplers only in llama.cpp, at one setting per rule, so the bound applies to those settings and that engine. We have not repeated the sampler comparisons on the stratified subset. Quantization covers the tested llama.cpp formats only, all produced with the same conversion procedure. Thinking mode is off
 throughout the main grid; the thinking-on spot-check of Appendix~\ref{app:thinking}
 agrees on GSM8K but shows a 10\,pp MMLU-Pro drop [2, 20] at $N{=}25$, so our bound does
 not cover thinking mode.
@@ -759,6 +760,42 @@ $T{=}1.3$, and the difference of the drop from the Q8 llama.cpp cell on the same
 
 \section{High-temperature regime}
 \label{app:hight}
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.78\textwidth]{fig3_cliff}
+\caption{Cliff temperatures (Section~\ref{sec:cliff}). Accuracy versus temperature per sampler (the $T \le 1.0$
+points come from the main grid; all at Q8). Each model has a cliff, at a temperature that
+differs by model. Truncation raises each model's cliff temperature.}
+\label{fig:cliff}
+\end{figure*}
+\begin{table}[t]
+\centering
+\caption{Higher-temperature series (Section~\ref{sec:cliff}): accuracy drop against each model's own $T{=}0.7$
+baseline under plain temperature (pp, 95\% item-clustered bootstrap CIs; Q8). The series
+is a separate run from the main grid; its $T{=}1.3$ step differs from
+Table~\ref{tab:collapse} by amounts within the CIs (Appendix~\ref{app:repro}).}
+\label{tab:cliff}
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+$T$ & Llama-3.1-8B & Qwen2.5-7B & Gemma-3-12B \\
+\midrule
+\multicolumn{4}{l}{\emph{GSM8K}} \\
+1.3 & $+32.7$ [24.7, 41.3] & $+4.0$ [$-0.7$, 9.3] & $+2.7$ [$-2.0$, 8.0] \\
+1.5 & $+68.0$ [58.0, 76.7] & $+24.0$ [15.3, 33.3] & $+14.7$ [8.7, 21.3] \\
+1.7 & $+76.0$ [66.7, 84.7] & $+70.0$ [62.0, 77.3] & $+42.7$ [34.7, 50.7] \\
+2.0 & $+77.3$ [67.3, 86.0] & $+90.7$ [82.7, 97.3] & $+84.0$ [76.7, 90.7] \\
+\midrule
+\multicolumn{4}{l}{\emph{MMLU-Pro}} \\
+1.3 & $+44.7$ [34.0, 56.0] & $+8.0$ [0.0, 16.7] & $+3.3$ [$-3.3$, 10.0] \\
+1.5 & $+46.0$ [35.3, 57.3] & $+40.0$ [28.7, 52.0] & $+39.3$ [29.3, 48.7] \\
+1.7 & $+48.0$ [36.7, 60.0] & $+61.3$ [48.7, 74.0] & $+57.3$ [45.3, 68.0] \\
+2.0 & $+48.0$ [36.7, 59.3] & $+65.3$ [53.3, 78.0] & $+63.3$ [51.3, 75.3] \\
+\bottomrule
+\end{tabular}}
+\end{table}
 Table~\ref{tab:hightemp} reports a small probe ($N{=}15$, $K{=}3$, Q8) in the regime
 where min-$p$ and top-$n\sigma$ report their largest gains. The sampler ordering is
 top-$n\sigma$ $\gg$ min-$p$ $\gg$ top-$p$ $\approx$ temperature; every generation in the zero cells ran to the token cap, and even the most robust model collapses under plain

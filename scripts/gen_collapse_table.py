@@ -25,7 +25,7 @@ LABEL = {"llama-3.1-8b-instruct": "Llama-3.1-8B", "llama-3-8b-instruct": "Llama-
          "hermes-3-llama-3.1-8b": "Hermes-3 (Llama-3.1-8B)", "mistral-7b-instruct-v0.3": "Mistral-7B-v0.3",
          "qwen2.5-7b-instruct": "Qwen2.5-7B", "qwen3-8b": "Qwen3-8B", "qwen3-4b": "Qwen3-4B", "qwen3-1.7b": "Qwen3-1.7B",
          "gemma-3-12b-it": "Gemma-3-12B", "qwen3.5-9b": "Qwen3.5-9B", "gemma-4-e4b-it": "Gemma-4-E4B", "olmo-3-7b-instruct": "OLMo-3-7B"}
-GROUP = {"hermes-3-llama-3.1-8b": "same base, other post-training", "qwen3.5-9b": "2026 panel", "gemma-4-e4b-it": "2026 panel", "olmo-3-7b-instruct": "2026 panel"}
+GROUP = {"hermes-3-llama-3.1-8b": "same base, other post-training", "qwen3.5-9b": "follow-up panel", "gemma-4-e4b-it": "follow-up panel", "olmo-3-7b-instruct": "follow-up panel"}
 TASK = {"gsm8k": "GSM8K", "mmlu_pro": "MMLU-Pro"}
 
 
