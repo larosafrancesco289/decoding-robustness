@@ -247,7 +247,7 @@ on task items. We resample the 50 items instead of
 individual generations, because the $K{=}3$ repetitions of one item share that item's
 difficulty and treating them as independent would understate the uncertainty. For every comparison in the grid, both configurations use the same items, so the bootstrap is paired.
 
-\textbf{Hardware and reproducibility.} The study totals about 211{,}000 graded
+\textbf{Hardware and reproducibility.} The study totals about 213{,}000 graded
 generations (Table~\ref{tab:design}). Hardware and the fixed llama.cpp commit are in Appendix~\ref{app:repro}; model-file
 hashes are in the repository's \texttt{DOWNLOADS.md}.
 
@@ -312,23 +312,28 @@ through llama.cpp, as the unquantized F16 GGUF; Llama-3.1-8B runs in 8-bit integ
 weights, the highest precision our 16\,GB card holds; Qwen3-4B runs in BF16. The collapse
 replicates on both Llama checkpoints and the control stays flat. In BF16 through
 transformers Llama-3.2-3B loses 40.0\,pp on GSM8K and 36.0 on MMLU-Pro (Q8 through
-llama.cpp: 38.0 and 36.7), 61 and 92\% of its $T{=}1.3$ generations run to the cap (55
-and 92\%), and the paired difference between the two engines' drops is $+2.0$ [$-9.3$,
-12.7] on GSM8K and $-0.7$ [$-9.3$, 8.0] on MMLU-Pro. The F16 GGUF loses 31.3 and 32.7.
-Llama-3.1-8B in INT8 loses 43.3 and 42.7 (Q8: 30.0 and 38.0), with 54 and 95\% of its
-$T{=}1.3$ generations at the cap; on GSM8K the INT8 drop exceeds the Q8 drop by 13.3
-[2.7, 24.0]. Qwen3-4B in BF16 moves by 1.3\,pp on GSM8K and 0.7 on MMLU-Pro, as in its
-Q8 and BF16 GGUF cells. These runs replicate the drop and its failure pattern. They do
+llama.cpp: 38.0 and 36.7), with 61 and 92\% of its $T{=}1.3$ generations at the cap, and
+the paired difference between the two engines' drops is $+2.0$ [$-9.3$, 12.7] on GSM8K
+and $-0.7$ [$-9.3$, 8.0] on MMLU-Pro. Llama-3.1-8B in INT8 loses 43.3 and 42.7 (Q8: 30.0
+and 38.0); on GSM8K the INT8 drop exceeds the Q8 drop by 13.3
+[3.3, 23.3]. Qwen3-4B in
+BF16 moves by 1.3\,pp and 0.7, as in its GGUF cells. These runs replicate the drop and its failure pattern. They do
 not show that the engines are equivalent: the intervals on the differences span about
 20\,pp, and the 8B GSM8K difference excludes zero. For Llama-3.2-3B the prompt strings
 differ only by a date its template stamps into the system header, which changes no
 token count; the other two arms reproduce every grid prompt hash
 (Appendix~\ref{app:engine}).
 
+The 2026 panel (Section~\ref{sec:modelbound}) needs a later llama.cpp release than the
+grid's pinned build, so we also rerun the Llama-3.2-3B and Qwen3-4B temperature tests on
+that release (the v0.4.0 rows of Table~\ref{tab:engine}). Both reproduce their
+pinned-build drops, and each paired difference in drops covers zero
+(Appendix~\ref{app:repro} gives the release and its settings).
+
 \begin{table}[t]
 \centering
-\caption{Engine and precision replication on the fixed items, two collapsing Llama
-checkpoints and a robust control: the plain-temperature drop with its 95\% item-clustered bootstrap CI, and the run-to-cap
+\caption{Engine, precision, and llama.cpp-release replication on the fixed items, two
+collapsing Llama checkpoints and a robust control: the plain-temperature drop with its 95\% item-clustered bootstrap CI, and the run-to-cap
 rate at $T{=}1.3$ on GSM8K / MMLU-Pro. Full accuracy levels in
 Appendix~\ref{app:engine}.}
 \label{tab:engine}
@@ -957,7 +962,16 @@ zero.}
     9456), native \texttt{/completion} endpoint, CUDA builds of the same commit per GPU
     architecture (sm\_75 for RTX 2080~Ti, sm\_120 for RTX 5070~Ti). Server-side BOS
     insertion is disabled; the client-rendered chat template owns the special tokens, and
-    each record stores the SHA-256 of the exact rendered prompt.
+    each record stores the SHA-256 of the exact rendered prompt. The 2026 panel and its
+    bridge run (Section~\ref{sec:replication}) use release v0.4.0 (commit
+    \texttt{5266f24d}, sm\_120), which two panel models require, with the same client-side
+    rendering and the server's template parser off (\texttt{--no-jinja}, the pinned
+    build's default). That release forces its own BOS for Gemma~4, so the Gemma-4 prompt is
+    rendered without one and carries a single BOS, and it reports the cap-length
+    degenerate streams the pinned build returned with a zero token count as an HTTP error
+    without text; the runner records those as zero-token cap hits in both builds, so the
+    only difference is that their text is missing on v0.4.0 runs (their parse path is
+    ``failed'' rather than ``flexible'').
   \item \textbf{Quantizations.} Every quantized checkpoint is a Bartowski imatrix GGUF
     (one provider, one recipe, so the quantization axis is not confounded by recipe).
     SHA-256 hashes of all 31 model files are pinned in the repository

@@ -19,6 +19,13 @@ TASK_LABEL = {"gsm8k": "GSM8K", "mmlu_pro": "MMLU-Pro"}
 ORDER = ["llama-3.2-3b-instruct", "llama-3.1-8b-instruct", "qwen3-4b"]
 
 
+def eng_label(label):
+    out = ENGINE_LABEL.get(label.split(" ")[0], label)
+    if "v0.4.0" in label:
+        out = "Q8 GGUF, llama.cpp v0.4.0"
+    if "offload" in label:
+        out += " (CPU offload)"
+    return out
 def ci(t, flip=False):
     if t is None:
         return "--"
@@ -38,6 +45,13 @@ def main():
         quant = next(iter(eng))[0]
         tag = "offload" if "offload" in path else ""
         rows_by_model.setdefault(model, []).append((quant + (" (CPU offload)" if tag else ""), eng))
+    # commit bridge: the same Q8 GGUFs through llama.cpp v0.4.0 (the 2026 panel's build)
+    for path in sorted(glob.glob("results/bridge_v040/*.jsonl")):
+        eng = load(path)
+        if not eng:
+            continue
+        model = next(iter(next(iter(eng.values())).values()))[0]["model"]
+        rows_by_model.setdefault(model, []).append(("Q8_0 v0.4.0", eng))
     lines = ["\\begin{tabular}{lllccccc}", "\\toprule",
              " & & & \\multicolumn{2}{c}{acc (\\%) at $T$} & & cap & \\\\",
              "Model & Engine, precision & Task & 0.7 & 1.3 & drop [95\\% CI] & at 1.3 & drop $-$ drop(Q8) \\\\"]
@@ -59,9 +73,9 @@ def main():
                 if not (s7 and s13):
                     continue
                 drop = boot_diff(hi, lo)
-                dd = "--" if quant == "Q8_0" else ci(boot_diff_in_drops(hi, lo, ref_q8.get(("Q8_0", task, "temperature", 1.3), {}),
+                dd = "--" if label == "Q8_0" else ci(boot_diff_in_drops(hi, lo, ref_q8.get(("Q8_0", task, "temperature", 1.3), {}),
                                                                         ref_q8.get(("Q8_0", task, "temperature", 0.7), {})), flip=True)
-                lines.append(f"{MODEL_LABEL[model] if first else ''} & {ENGINE_LABEL.get(quant, quant) + (' (CPU offload)' if 'offload' in label else '')} & "
+                lines.append(f"{MODEL_LABEL[model] if first else ''} & {eng_label(label)} & "
                              f"{TASK_LABEL[task]} & {s7['acc']*100:.1f} & {s13['acc']*100:.1f} & {ci(drop, flip=True)} & {s13['cap']*100:.0f} & {dd} \\\\")
                 first = False
     lines += ["\\bottomrule", "\\end{tabular}"]
@@ -89,8 +103,7 @@ def main():
                 if not (stats(lo) and s13):
                     cells.append("--"); caps.append("--"); continue
                 cells.append(ci(boot_diff(hi, lo), flip=True)); caps.append(f"{s13['cap']*100:.0f}")
-            eng_label = ENGINE_LABEL.get(quant, quant) + (" (CPU offload)" if "offload" in label else "")
-            comp.append(f"{MODEL_LABEL[model] if first else ''} & {eng_label} & {cells[0]} & {cells[1]} & {caps[0]} / {caps[1]} \\\\")
+            comp.append(f"{MODEL_LABEL[model] if first else ''} & {eng_label(label)} & {cells[0]} & {cells[1]} & {caps[0]} / {caps[1]} \\\\")
             first = False
     comp += ["\\bottomrule", "\\end{tabular}"]
     Path("paper/tables/tab_engine.tex").write_text("\n".join(comp) + "\n")
