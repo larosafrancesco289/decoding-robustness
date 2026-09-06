@@ -1,0 +1,152 @@
+{"audit_id": "A001", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid-derivation; no final answer"}
+{"audit_id": "A002", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "'The final answer is (300)/3 = 100'; trailing sentence"}
+{"audit_id": "A003", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is H.' no parentheses"}
+{"audit_id": "A004", "label": "other", "degenerate_onset": null, "answer_present": false, "note": "Concludes answer not among options; no letter chosen"}
+{"audit_id": "A005", "label": "other", "degenerate_onset": null, "answer_present": false, "note": "Placeholder 'The answer is (X)'; declines to compute"}
+{"audit_id": "A006", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: bold **18** inside sentence, repeated twice"}
+{"audit_id": "A007", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A008", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A009", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: brackets with unit [540 meters]; borderline"}
+{"audit_id": "A010", "label": "degenerate", "degenerate_onset": 0.91, "answer_present": true, "note": "Final answer '[?]'; Japanese/Korean drift; F only in garbled line"}
+{"audit_id": "A011", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is **G**.' no parentheses"}
+{"audit_id": "A012", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is **I**.' no parentheses"}
+{"audit_id": "A013", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: bold"}
+{"audit_id": "A014", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Year-by-year enumeration cut mid-line"}
+{"audit_id": "A015", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Year-by-year enumeration cut mid-line"}
+{"audit_id": "A016", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "States (B) then hedges that options mismatch; borderline"}
+{"audit_id": "A017", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid-formula"}
+{"audit_id": "A018", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A019", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: \\boxed{109} inside sentence; borderline"}
+{"audit_id": "A020", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'best fit is option F:' plus option text; no answer sentence"}
+{"audit_id": "A021", "label": "other", "degenerate_onset": null, "answer_present": true, "note": "Two letters (J,F) for sub-parts; no single answer; borderline misformatted"}
+{"audit_id": "A022", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Escaped dollar sign \\$16.00"}
+{"audit_id": "A023", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Answer sentence first, reasoning after"}
+{"audit_id": "A024", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "Ends '$75.00' with no final-answer sentence"}
+{"audit_id": "A025", "label": "other", "degenerate_onset": null, "answer_present": false, "note": "Says answer not among options; extra commentary"}
+{"audit_id": "A026", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Verbose hedged 'The final answer is that ... 230 miles'; borderline"}
+{"audit_id": "A027", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Sentence repeated twice"}
+{"audit_id": "A028", "label": "completed", "degenerate_onset": null, "answer_present": false, "note": "Answer 21 stated first; reasoning then loops and truncates; borderline"}
+{"audit_id": "A029", "label": "degenerate", "degenerate_onset": 0.36, "answer_present": false, "note": "Token salad from the formula step onward"}
+{"audit_id": "A030", "label": "degenerate", "degenerate_onset": 0.33, "answer_present": false, "note": "Garble at step 4, partial recovery, then script drift"}
+{"audit_id": "A031", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Ends without selecting an option; confused but readable"}
+{"audit_id": "A032", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is: A. $214.40 ... (Option A)'"}
+{"audit_id": "A033", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid summary table"}
+{"audit_id": "A034", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The correct option is H.' no answer sentence"}
+{"audit_id": "A035", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A036", "label": "other", "degenerate_onset": null, "answer_present": false, "note": "Declares options erroneous; no letter"}
+{"audit_id": "A037", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: bold"}
+{"audit_id": "A038", "label": "degenerate", "degenerate_onset": 0.58, "answer_present": false, "note": "Garbles from step 3, then code/Korean salad"}
+{"audit_id": "A039", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "'The answer is (I)' contradicts reasoning; still coherent"}
+{"audit_id": "A040", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A041", "label": "degenerate", "degenerate_onset": 0.78, "answer_present": true, "note": "Word salad then Chinese drift; 'B' only inside Chinese text"}
+{"audit_id": "A042", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: bold"}
+{"audit_id": "A043", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: bold around (C)"}
+{"audit_id": "A044", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "Ends '= 5 miles per hour.' no final-answer sentence"}
+{"audit_id": "A045", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "One garbled phrase before '(F)'; borderline degenerate"}
+{"audit_id": "A046", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: bold around (H)"}
+{"audit_id": "A047", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "'(J)' followed by option text"}
+{"audit_id": "A048", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: whole sentence inside \\boxed{}; borderline"}
+{"audit_id": "A049", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut at 'Recomputing' header"}
+{"audit_id": "A050", "label": "degenerate", "degenerate_onset": 0.35, "answer_present": true, "note": "Nonsense intrusions; answer 'K' not a valid option; borderline"}
+{"audit_id": "A051", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A052", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A053", "label": "degenerate", "degenerate_onset": 0.16, "answer_present": false, "note": "Token salad from step 4"}
+{"audit_id": "A054", "label": "degenerate", "degenerate_onset": 0.68, "answer_present": true, "note": "Garbled formula line then 'The answer is H.'; trailing garble; borderline"}
+{"audit_id": "A055", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Confused but readable; cut mid-sentence"}
+{"audit_id": "A056", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Loops recalculating; cut mid-sentence"}
+{"audit_id": "A057", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: brackets [366]; borderline"}
+{"audit_id": "A058", "label": "degenerate", "degenerate_onset": 0.08, "answer_present": false, "note": "Word salad almost from the start"}
+{"audit_id": "A059", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A060", "label": "other", "degenerate_onset": null, "answer_present": true, "note": "Names C as closest but says answer not among options; borderline"}
+{"audit_id": "A061", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": true, "note": "Ends 'which is 14' no period/sentence; borderline misformatted"}
+{"audit_id": "A062", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Verbose 'The final answer is The final profit ... is $96'; borderline"}
+{"audit_id": "A063", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The final answer totalling ... = 140 sheep'; borderline completed"}
+{"audit_id": "A064", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Two contradictory final-answer sentences ($30, $49.36) then cut; borderline"}
+{"audit_id": "A065", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: bold"}
+{"audit_id": "A066", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A067", "label": "misformatted", "degenerate_onset": null, "answer_present": false, "note": "Answer given as value $398.65, no letter; borderline"}
+{"audit_id": "A068", "label": "other", "degenerate_onset": null, "answer_present": false, "note": "Refuses: problem contradictory, no final answer"}
+{"audit_id": "A069", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid option list"}
+{"audit_id": "A070", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A071", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid option list"}
+{"audit_id": "A072", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is **C**.' no parentheses"}
+{"audit_id": "A073", "label": "degenerate", "degenerate_onset": 0.11, "answer_present": false, "note": "Word salad after first calculation"}
+{"audit_id": "A074", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is H.' no parentheses"}
+{"audit_id": "A075", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Answer sentence first, reasoning after"}
+{"audit_id": "A076", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid double-check"}
+{"audit_id": "A077", "label": "degenerate", "degenerate_onset": 0.83, "answer_present": false, "note": "Chinese/Thai drift then hallucinated 'user' turn"}
+{"audit_id": "A078", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is J.' no parentheses"}
+{"audit_id": "A079", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Verbose 'The final answer is John runs at 10 miles/hour'; borderline"}
+{"audit_id": "A080", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A081", "label": "degenerate", "degenerate_onset": 0.29, "answer_present": false, "note": "Multilingual token salad"}
+{"audit_id": "A082", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid-formula"}
+{"audit_id": "A083", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'Final Answer: ... 230 miles' not sentence form; one token glitch"}
+{"audit_id": "A084", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut while listing closest options; no letter"}
+{"audit_id": "A085", "label": "degenerate", "degenerate_onset": 0.92, "answer_present": true, "note": "Multi-script garble, then recovers to state (D)"}
+{"audit_id": "A086", "label": "degenerate", "degenerate_onset": 0.96, "answer_present": false, "note": "Brief garble then stops mid-option 6; borderline cutoff-coherent"}
+{"audit_id": "A087", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid table"}
+{"audit_id": "A088", "label": "other", "degenerate_onset": null, "answer_present": false, "note": "Says answer not among options; offers help"}
+{"audit_id": "A089", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: \\boxed{230} inside sentence; borderline"}
+{"audit_id": "A090", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Answer sentence first"}
+{"audit_id": "A091", "label": "degenerate", "degenerate_onset": 0.97, "answer_present": false, "note": "Ends in short garble 'fakely bent patt]'; borderline cutoff-coherent"}
+{"audit_id": "A092", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid-sentence"}
+{"audit_id": "A093", "label": "misformatted", "degenerate_onset": null, "answer_present": false, "note": "Ends '$4,250=$2,250' no letter; borderline"}
+{"audit_id": "A094", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is **C**.' no parentheses"}
+{"audit_id": "A095", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "Muddled; last value 0.83 outside answer sentence; one garbled fragment; borderline"}
+{"audit_id": "A096", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: bold"}
+{"audit_id": "A097", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Sentence repeated"}
+{"audit_id": "A098", "label": "degenerate", "degenerate_onset": 0.31, "answer_present": true, "note": "Progressive word salad; 'answer C' inside salad"}
+{"audit_id": "A099", "label": "degenerate", "degenerate_onset": 0.67, "answer_present": false, "note": "Garble then hallucinated 'user' turn"}
+{"audit_id": "A100", "label": "degenerate", "degenerate_onset": 0.05, "answer_present": false, "note": "Word salad almost immediately"}
+{"audit_id": "A101", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A102", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer, sourcing inspiration ..., is E:' odd form"}
+{"audit_id": "A103", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid-formula"}
+{"audit_id": "A104", "label": "degenerate", "degenerate_onset": 0.11, "answer_present": false, "note": "Word salad from first calculation"}
+{"audit_id": "A105", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Confused but readable; cut mid part (b)"}
+{"audit_id": "A106", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": true, "note": "Conclusion 6 mph in prose; final sentence cut at 'The'; borderline"}
+{"audit_id": "A107", "label": "degenerate", "degenerate_onset": 0.09, "answer_present": false, "note": "Word salad after first paragraph"}
+{"audit_id": "A108", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'directly available in option I' no answer sentence"}
+{"audit_id": "A109", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Rambling but readable; cut mid-sentence"}
+{"audit_id": "A110", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is:' then '1) J.' '2) J.' list form"}
+{"audit_id": "A111", "label": "other", "degenerate_onset": null, "answer_present": true, "note": "Gives range F-H instead of one letter; borderline misformatted"}
+{"audit_id": "A112", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is **H**.' no parentheses"}
+{"audit_id": "A113", "label": "degenerate", "degenerate_onset": 0.17, "answer_present": false, "note": "Word salad from third paragraph"}
+{"audit_id": "A114", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid re-examination of J"}
+{"audit_id": "A115", "label": "other", "degenerate_onset": null, "answer_present": false, "note": "Says answer NOT in list of options"}
+{"audit_id": "A116", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Ends without answer; not obviously truncated"}
+{"audit_id": "A117", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid node calculation"}
+{"audit_id": "A118", "label": "misformatted", "degenerate_onset": null, "answer_present": false, "note": "Answer given as value $43.88, no letter; borderline"}
+{"audit_id": "A119", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid-sum"}
+{"audit_id": "A120", "label": "degenerate", "degenerate_onset": 0.97, "answer_present": false, "note": "Drifts into a hallucinated Chinese question; no answer"}
+{"audit_id": "A121", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Sentence repeated on one line"}
+{"audit_id": "A122", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid re-check"}
+{"audit_id": "A123", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut before final addition"}
+{"audit_id": "A124", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is \\( G \\).' LaTeX delimiters; borderline"}
+{"audit_id": "A125", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The final answer is John initially had 13'; verbal answer none; borderline"}
+{"audit_id": "A126", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid-fraction"}
+{"audit_id": "A127", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A128", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is **H**.' no parentheses"}
+{"audit_id": "A129", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "'The final answer is: The net profit is $20.00.'; borderline"}
+{"audit_id": "A130", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is **I**.' no parentheses"}
+{"audit_id": "A131", "label": "other", "degenerate_onset": null, "answer_present": false, "note": "Refuses: problem inconsistent, cannot provide answer"}
+{"audit_id": "A132", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: bold"}
+{"audit_id": "A133", "label": "completed", "degenerate_onset": null, "answer_present": false, "note": "Answer 150 stated first; reasoning then goes astray and truncates; borderline"}
+{"audit_id": "A134", "label": "degenerate", "degenerate_onset": 0.49, "answer_present": false, "note": "Word salad from item C"}
+{"audit_id": "A135", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Escaped dollar; sentence repeated"}
+{"audit_id": "A136", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut at 'Profit' header"}
+{"audit_id": "A137", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: bold whole sentence"}
+{"audit_id": "A138", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A139", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Loops over options without concluding; cut"}
+{"audit_id": "A140", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer, based on the provided options, is D.'"}
+{"audit_id": "A141", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut mid-sentence"}
+{"audit_id": "A142", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": ""}
+{"audit_id": "A143", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: brackets with unit [10 mph]; borderline"}
+{"audit_id": "A144", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: brackets around prose [he has 0 lego sets left]; borderline"}
+{"audit_id": "A145", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Sentence repeated"}
+{"audit_id": "A146", "label": "cutoff-coherent", "degenerate_onset": null, "answer_present": false, "note": "Cut at 'Step 4' header"}
+{"audit_id": "A147", "label": "degenerate", "degenerate_onset": 0.15, "answer_present": false, "note": "Word salad from second paragraph"}
+{"audit_id": "A148", "label": "degenerate", "degenerate_onset": 0.88, "answer_present": false, "note": "Ends in short garble; borderline cutoff-coherent"}
+{"audit_id": "A149", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'... is (H) Ethics of care.' no answer sentence"}
+{"audit_id": "A150", "label": "completed", "degenerate_onset": null, "answer_present": true, "note": "Decorated: brackets [0]; borderline"}
+{"audit_id": "A151", "label": "misformatted", "degenerate_onset": null, "answer_present": true, "note": "'The answer is **H**.' no parentheses"}
+{"audit_id": "A152", "label": "degenerate", "degenerate_onset": 0.68, "answer_present": true, "note": "Multi-script garble, recovers to state (F)"}

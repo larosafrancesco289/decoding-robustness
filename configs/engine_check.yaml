@@ -1,0 +1,57 @@
+# Engine/precision check (2026-09-06). The decisive reviewer question after the BlackboxNLP
+# round: does Llama's collapse under plain temperature sampling survive a change of engine
+# and precision, or is it a llama.cpp / imatrix-quantization artifact? This config is the
+# llama.cpp half of a 2x2: same Llama-3.2-3B, same frozen items, same prompt template, but
+# the unquantized f16 GGUF instead of Q8_0. scripts/run_transformers_axis.py supplies the
+# transformers half (BF16-hf, INT8-hf). Collapse axis only: greedy + plain temperature at
+# the grid's temperatures, K=3, both frozen N=50 tasks. Same shape as llama_lineage.yaml.
+
+name: engine-check
+phase: engine_check
+output_dir: results/engine_check
+
+checkpoints:
+  - name: llama-3.2-3b-instruct
+    family: llama
+    params_b: 3.2
+    hf_repo: bartowski/Llama-3.2-3B-Instruct-GGUF
+    quant_files:
+      F16: Llama-3.2-3B-Instruct-f16.gguf
+
+quant_levels: [F16]
+
+samplers:
+  - method: greedy
+  - method: temperature
+
+temperatures: [0.7, 1.0, 1.3]
+
+tasks:
+  - name: gsm8k
+    hf_dataset: openai/gsm8k
+    hf_config: main
+    revision: main
+    split: test
+    subset_size: 50
+    max_new_tokens: 512
+    parser: gsm8k_numeric
+
+  - name: mmlu_pro
+    hf_dataset: TIGER-Lab/MMLU-Pro
+    revision: main
+    split: test
+    subset_size: 50
+    max_new_tokens: 1024
+    parser: mmlu_pro_letter
+
+generation:
+  global_seed: 0
+  repetitions: 3
+
+server:
+  host: 127.0.0.1
+  port: 8080
+  llama_cpp_commit: 5aba5364d959756c43eccc45596731e7b4eb3aa4
+  n_ctx: 16384
+  n_gpu_layers: -1
+  parallel: 8

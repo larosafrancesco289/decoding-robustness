@@ -19,6 +19,7 @@ class QuantLevel(StrEnum):
     """Quantization levels (one provider's imatrix GGUFs). BF16 is the small-model anchor."""
 
     BF16 = "BF16"
+    F16 = "F16"  # engine-check anchor: bartowski f16 GGUF (HF bf16 weights rounded to fp16)
     Q8_0 = "Q8_0"
     Q6_K = "Q6_K"
     Q4_K_M = "Q4_K_M"

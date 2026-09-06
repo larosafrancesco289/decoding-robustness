@@ -1,0 +1,13 @@
+\begin{tabular}{lllccccc}
+\toprule
+ & & & \multicolumn{2}{c}{acc (\%) at $T$} & & cap & \\
+Model & Engine, precision & Task & 0.7 & 1.3 & drop [95\% CI] & at 1.3 & drop $-$ drop(Q8) \\
+\midrule
+Llama-3.2-3B & BF16, transformers & GSM8K & 74.7 & 34.7 & $+40.0$\,[$29.3$,\,$49.3$] & 61 & $+2.0$\,[$-9.3$,\,$12.7$] \\
+ & BF16, transformers & MMLU-Pro & 40.7 & 4.7 & $+36.0$\,[$25.3$,\,$48.0$] & 92 & $-0.7$\,[$-9.3$,\,$8.0$] \\
+ & F16 GGUF, llama.cpp & GSM8K & 74.0 & 42.7 & $+31.3$\,[$23.3$,\,$40.0$] & 53 & $-6.7$\,[$-17.3$,\,$4.0$] \\
+ & F16 GGUF, llama.cpp & MMLU-Pro & 38.0 & 5.3 & $+32.7$\,[$22.7$,\,$43.3$] & 91 & $-4.0$\,[$-11.3$,\,$2.7$] \\
+ & Q8 GGUF, llama.cpp & GSM8K & 74.0 & 36.0 & $+38.0$\,[$29.3$,\,$46.7$] & 55 & -- \\
+ & Q8 GGUF, llama.cpp & MMLU-Pro & 40.0 & 3.3 & $+36.7$\,[$27.3$,\,$46.7$] & 92 & -- \\
+\bottomrule
+\end{tabular}

@@ -185,17 +185,36 @@ def forest(ax, rows, xlabel, *, zero_line=True, highlight=lambda m: m.startswith
 
 
 # ---------------------------------------------------------------- figures
-def fig1_collapse(by):
-    fig, axes = plt.subplots(1, 2, figsize=(6.6, 2.5), sharey=True,
-                             constrained_layout=True)
+def fig1_collapse(by=None):
+    """Q8-only forest of the plain-temperature drop for every model with the temperature axis: the main
+    grid, the Llama lineage run, and the 2026 panel (results/temp_sweep_2026) when present. Same loader
+    and order as scripts/gen_collapse_table.py, so figure and Table 1 cannot disagree."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import gen_collapse_table as gct
+    rec = gct.load()
+    models = [m for m in gct.ORDER if any(k[0] == m for k in rec)] + sorted({k[0] for k in rec} - set(gct.ORDER))
+    corr = defaultdict(lambda: defaultdict(list))
+    for (m, task, t), imap in rec.items():
+        for it, rs in imap.items():
+            corr[(m, task, t)][it] = [int(r["correct"]) for r in rs]
+    n = len(models)
+    fig, axes = plt.subplots(1, 2, figsize=(6.6, 0.9 + 0.235 * n), sharey=True, constrained_layout=True)
+    fragile = lambda m: m.startswith("llama") or m.startswith("hermes")
     for ax, task in zip(axes, TASKS, strict=True):
         rows = []
-        for m in MODELS:
-            r = boot_drop(by[(m, task, "temperature", 0.7)], by[(m, task, "temperature", 1.3)])
+        for m in models:
+            r = boot_drop(corr[(m, task, 0.7)], corr[(m, task, 1.3)])
             if r:
                 d, lo, hi = r
                 rows.append((m, d * 100, lo * 100, hi * 100))
-        forest(ax, rows, "accuracy drop $T0.7 \\to T1.3$ (pp)")
+        SHORT.update({m: gct.LABEL.get(m, m).replace(" (Llama-3.1-8B)", "") for m in models})
+        forest(ax, rows, "accuracy drop $T0.7 \\to T1.3$ (pp)", highlight=fragile)
+        # thin separators between the grid/lineage block and the extension groups
+        groups = [gct.GROUP.get(m) for m, *_ in rows]
+        for i in range(1, len(groups)):
+            if groups[i] != groups[i - 1]:
+                ax.axhline(len(rows) - 1 - i + 0.5, color="#BBBBBB", lw=0.6)
         ax.set_title(TASK_NAME[task])
     save(fig, "fig1_collapse")
 

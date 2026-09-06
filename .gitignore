@@ -45,3 +45,7 @@ paper/backup-*/
 /HANDOFF.md
 /PUBLISHING.md
 /SUBMIT.md
+
+# session scratch (reviews, plans, research notes) and latex aux
+/tmp/
+/paper/main.out

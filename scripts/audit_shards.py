@@ -140,7 +140,9 @@ for r in records:
         k = (r["model"], r["task"])
         sig[k]["n"] += 1
         sig[k][r["parse_method"]] += 1
-        if not r["stopped"]:
+        # llama.cpp sets stopped=True on cap hits too; cap = ran to the task budget, or a server-recovered
+        # degenerate stream (n_completion_tokens == 0), as in gen_tables.py.
+        if r["n_completion_tokens"] >= {"gsm8k": 512, "mmlu_pro": 1024}[r["task"]] or r["n_completion_tokens"] == 0:
             sig[k]["hit_token_cap"] += 1
         if not r["raw_output"].strip():
             sig[k]["empty"] += 1

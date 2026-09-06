@@ -1,14 +1,15 @@
 \begin{tabular}{@{}lllllrrl@{}}
 \toprule
-Experiment & Models & Quantization & Arms & $T$ & $N{\times}K$ & Gen. & Where \\
+Experiment & Models & Quantization & Configurations & $T$ & $N{\times}K$ & Gen. & Where \\
 \midrule
-Main grid & 7 (5 families) & Q8/Q6/Q4/Q3 (+BF16) & 8 & 0.7, 1.0, 1.3 & $50{\times}3$ & 185,600 & \S\ref{sec:modelbound}--\ref{sec:quant} \\
-Cliff ladder & Llama-3.1, Qwen2.5, Gemma-3 & Q8 & 4 & 1.3, 1.5, 1.7, 2.0 & $50{\times}3$ & 14,400 & \S\ref{sec:cliff} \\
-Lineage & Llama-3-8B, Llama-3.2-3B & Q8 & greedy, temp. & 0.7, 1.0, 1.3 & $50{\times}3$ & 2,000 & \S\ref{sec:modelbound} \\
-Stratified & Llama-3.1, Qwen2.5, Gemma-3 & Q8 & greedy, temp. & 0.7, 1.0, 1.3 & $50{\times}3$ & 1,500 & App.~\ref{app:strat} \\
+Main grid & 7 (5 families) & Q8/Q6/Q4/Q3 (+BF16) & 8 & 0.7, 1.0, 1.3 & $50{\times}3$ & 185,600 & \S\ref{sec:modelbound}, \ref{sec:degeneration}, \ref{sec:spread} \\
+Higher-$T$ series & Llama-3.1, Qwen2.5, Gemma-3 & Q8 & 4 & 1.3, 1.5, 1.7, 2.0 & $50{\times}3$ & 14,400 & \S\ref{sec:cliff} \\
+Additional Llama releases & Llama-3-8B, Llama-3.2-3B & Q8 & greedy, temp. & 0.7, 1.0, 1.3 & $50{\times}3$ & 2,000 & \S\ref{sec:modelbound} \\
+Engine check & Llama-3.2-3B & BF16 (transformers), F16 (llama.cpp) & greedy, temp. & 0.7, 1.0, 1.3 & $50{\times}3$ & 2,000 & \S\ref{sec:replication} \\
+Stratified & Llama-3.1, Qwen2.5, Gemma-3 & Q8 & greedy, temp. & 0.7, 1.0, 1.3 & $50{\times}3$ & 1,500 & \S\ref{sec:replication} \\
 High $T$ & Llama-3.1, Gemma-3 & Q8 & 4 & 2.0, 3.0 & $15{\times}3$ & 1,440 & App.~\ref{app:hight} \\
 Thinking on & Qwen3-8B & Q8 & 3 & 0.7, 1.3 & $25{\times}2$ & 450 & App.~\ref{app:thinking} \\
-Logit probe & 7 & Q8 & greedy & -- & $50{\times}1$ & 700 & \S\ref{sec:mechanism} \\
-Forced token & 7 & Q8 & greedy, inject. & -- & $50{\times}1$ & 1,396 & \S\ref{sec:mechanism} \\
+Token-score analysis & 7 & Q8 & greedy & -- & $50{\times}1$ & 700 & App.~\ref{app:mechanism} \\
+Forced token & 7 & Q8 & greedy, inject. & -- & $50{\times}1$ & 1,396 & App.~\ref{app:mechanism} \\
 \bottomrule
 \end{tabular}

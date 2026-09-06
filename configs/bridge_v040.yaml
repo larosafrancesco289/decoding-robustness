@@ -1,0 +1,61 @@
+# Commit bridge (2026-09-06). The 2026 panel (configs/temp_sweep_2026.yaml) needs llama.cpp v0.4.0, newer than the
+# paper's pinned 5aba5364. This config reruns the temperature axis of one fragile and one robust checkpoint on the
+# new build, same GGUF files, same frozen items, same rendered prompts, so the two builds can be compared on the
+# temperature effect (not just baseline accuracy) before any new-model number sits next to a grid number.
+
+name: bridge-v040
+phase: bridge_v040
+output_dir: results/bridge_v040
+
+checkpoints:
+  - name: llama-3.2-3b-instruct
+    family: llama
+    params_b: 3.2
+    hf_repo: bartowski/Llama-3.2-3B-Instruct-GGUF
+    quant_files:
+      Q8_0: Llama-3.2-3B-Instruct-Q8_0.gguf
+
+  - name: qwen3-4b
+    family: qwen3
+    params_b: 4.0
+    hf_repo: bartowski/Qwen_Qwen3-4B-GGUF
+    quant_files:
+      Q8_0: Qwen_Qwen3-4B-Q8_0.gguf
+
+quant_levels: [Q8_0]
+
+samplers:
+  - method: greedy
+  - method: temperature
+
+temperatures: [0.7, 1.0, 1.3]
+
+tasks:
+  - name: gsm8k
+    hf_dataset: openai/gsm8k
+    hf_config: main
+    revision: main
+    split: test
+    subset_size: 50
+    max_new_tokens: 512
+    parser: gsm8k_numeric
+
+  - name: mmlu_pro
+    hf_dataset: TIGER-Lab/MMLU-Pro
+    revision: main
+    split: test
+    subset_size: 50
+    max_new_tokens: 1024
+    parser: mmlu_pro_letter
+
+generation:
+  global_seed: 0
+  repetitions: 3
+
+server:
+  host: 127.0.0.1
+  port: 8080
+  llama_cpp_commit: 427291b5b34cd914a31b3fd3b61a68f6184f4b9f   # PLACEHOLDER: replace with the commit the v0.4.0 build prints
+  n_ctx: 16384
+  n_gpu_layers: -1
+  parallel: 8

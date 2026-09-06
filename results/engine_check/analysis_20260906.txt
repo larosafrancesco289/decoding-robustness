@@ -1,0 +1,58 @@
+
+##### llama-3.2-3b-instruct  engine=transformers  quant=BF16-hf  (results/engine_check/llama-3.2-3b-instruct__BF16-hf.jsonl)
+  prompt-hash agreement with reference: 0/400; prompt-token-count agreement: 400/400   (hashes differ only by the template's run-date stamp; token counts agree)
+
+  [gsm8k]  cond      src          n    acc    cap strict   fail   toks
+           greedy    BF16-hf     50   76.0    0.0  100.0    0.0    183
+                     Q8_0(ref)   50   74.0    0.0  100.0    0.0    186   gap engine-ref: +2.0 [-4.0, +8.0] (n_items=50)
+           T0.7      BF16-hf    150   74.7    1.3   96.0    0.0    198
+                     Q8_0(ref)  150   74.0    0.7   98.7    0.0    199   gap engine-ref: +0.7 [-7.3, +8.0] (n_items=50)
+           T1.0      BF16-hf    150   71.3    0.7   92.7    0.0    190
+                     Q8_0(ref)  150   69.3    2.0   89.3    0.0    199   gap engine-ref: +2.0 [-3.3, +7.3] (n_items=50)
+           T1.3      BF16-hf    150   34.7   61.3   36.0    0.0    374
+                     Q8_0(ref)  150   36.0   55.3   41.3    0.0    344   gap engine-ref: -1.3 [-8.7, +6.0] (n_items=50)
+           change T0.7->T1.3 [BF16-hf]: acc -40.0 [-50.0, -30.0] (n_items=50) | cap +60.0 [+49.3, +70.7] (n_items=50) | strict -60.0 [-70.0, -50.0] (n_items=50)
+           change T0.7->T1.3 [Q8_0]: acc -38.0 [-47.3, -29.3] (n_items=50) | cap +54.7 [+44.7, +64.7] (n_items=50) | strict -57.3 [-67.3, -46.7] (n_items=50)
+           drop(BF16-hf) - drop(Q8_0): -2.0 [-12.0, +9.3] (n_items=50)
+
+  [mmlu_pro]  cond      src          n    acc    cap strict   fail   toks
+           greedy    BF16-hf     50   44.0   16.0   82.0   16.0    453
+                     Q8_0(ref)   50   42.0   18.0   82.0   18.0    454   gap engine-ref: +2.0 [-6.0, +10.0] (n_items=50)
+           T0.7      BF16-hf    150   40.7   10.0   84.0   14.7    440
+                     Q8_0(ref)  150   40.0   10.0   82.7   14.7    444   gap engine-ref: +0.7 [-6.7, +9.3] (n_items=50)
+           T1.0      BF16-hf    150   30.0   17.3   68.7   27.3    470
+                     Q8_0(ref)  150   33.3   22.0   65.3   30.0    487   gap engine-ref: -3.3 [-11.3, +4.7] (n_items=50)
+           T1.3      BF16-hf    150    4.7   92.0    7.3   82.7    963
+                     Q8_0(ref)  150    3.3   92.0    6.0   85.3    911   gap engine-ref: +1.3 [-2.0, +4.7] (n_items=50)
+           change T0.7->T1.3 [BF16-hf]: acc -36.0 [-47.3, -25.3] (n_items=50) | cap +82.0 [+74.7, +88.7] (n_items=50) | strict -76.7 [-84.7, -68.0] (n_items=50)
+           change T0.7->T1.3 [Q8_0]: acc -36.7 [-46.7, -28.0] (n_items=50) | cap +82.0 [+74.0, +89.3] (n_items=50) | strict -76.7 [-84.7, -67.3] (n_items=50)
+           drop(BF16-hf) - drop(Q8_0): +0.7 [-8.0, +9.3] (n_items=50)
+
+##### llama-3.2-3b-instruct  engine=llama.cpp  quant=F16  (results/engine_check/llama-3.2-3b-instruct__F16-gguf.jsonl)
+  prompt-hash agreement with reference: 0/398; prompt-token-count agreement: 398/398   (hashes differ only by the template's run-date stamp; token counts agree)
+
+  [gsm8k]  cond      src          n    acc    cap strict   fail   toks
+           greedy    F16         50   76.0    2.0   98.0    0.0    191
+                     Q8_0(ref)   50   74.0    0.0  100.0    0.0    186   gap engine-ref: +2.0 [+0.0, +6.0] (n_items=50)
+           T0.7      F16        150   74.0    0.7   97.3    0.0    196
+                     Q8_0(ref)  150   74.0    0.7   98.7    0.0    199   gap engine-ref: +0.0 [-6.7, +6.7] (n_items=50)
+           T1.0      F16        150   70.0    4.7   88.0    0.0    204
+                     Q8_0(ref)  150   69.3    2.0   89.3    0.0    199   gap engine-ref: +0.7 [-6.7, +8.0] (n_items=50)
+           T1.3      F16        150   42.7   52.7   44.7    1.3    324
+                     Q8_0(ref)  150   36.0   55.3   41.3    0.0    344   gap engine-ref: +6.7 [-3.4, +16.0] (n_items=50)
+           change T0.7->T1.3 [F16]: acc -31.3 [-40.7, -22.7] (n_items=50) | cap +52.0 [+41.3, +62.0] (n_items=50) | strict -52.7 [-62.0, -42.7] (n_items=50)
+           change T0.7->T1.3 [Q8_0]: acc -38.0 [-47.3, -29.3] (n_items=50) | cap +54.7 [+44.7, +64.7] (n_items=50) | strict -57.3 [-67.3, -46.7] (n_items=50)
+           drop(F16) - drop(Q8_0): +6.7 [-4.0, +17.3] (n_items=50)
+
+  [mmlu_pro]  cond      src          n    acc    cap strict   fail   toks
+           greedy    F16         50   42.0    8.0   88.0   10.0    395
+                     Q8_0(ref)   50   42.0   18.0   82.0   18.0    454   gap engine-ref: +0.0 [-12.0, +10.0] (n_items=50)
+           T0.7      F16        150   38.0    8.7   84.0   14.0    429
+                     Q8_0(ref)  150   40.0   10.0   82.7   14.7    444   gap engine-ref: -2.0 [-8.0, +4.7] (n_items=50)
+           T1.0      F16        150   32.7   26.7   64.7   31.3    514
+                     Q8_0(ref)  150   33.3   22.0   65.3   30.0    487   gap engine-ref: -0.7 [-10.0, +8.0] (n_items=50)
+           T1.3      F16        150    5.3   91.3    6.7   85.3    917
+                     Q8_0(ref)  150    3.3   92.0    6.0   85.3    911   gap engine-ref: +2.0 [-1.3, +5.3] (n_items=50)
+           change T0.7->T1.3 [F16]: acc -32.7 [-42.7, -23.3] (n_items=50) | cap +82.7 [+75.3, +89.3] (n_items=50) | strict -77.3 [-84.7, -68.7] (n_items=50)
+           change T0.7->T1.3 [Q8_0]: acc -36.7 [-46.7, -27.3] (n_items=50) | cap +82.0 [+73.3, +90.0] (n_items=50) | strict -76.7 [-85.3, -67.3] (n_items=50)
+           drop(F16) - drop(Q8_0): +4.0 [-2.7, +10.7] (n_items=50)

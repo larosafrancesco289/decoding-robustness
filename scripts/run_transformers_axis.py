@@ -56,6 +56,8 @@ def main() -> None:
     ap.add_argument("--quant-label", default=None, help="record quant label (default BF16-hf / INT8-hf)")
     ap.add_argument("--load-in-8bit", action="store_true")
     ap.add_argument("--device-map", default="cuda", help="'cuda' or 'auto' (CPU offload)")
+    ap.add_argument("--max-memory", default=None,
+                    help="with --device-map auto: accelerate max_memory, e.g. '0=13GiB,cpu=26GiB' (leave VRAM headroom for the KV cache)")
     ap.add_argument("--batch-size", type=int, default=8)
     ap.add_argument("--temperatures", type=float, nargs="*", default=None, help="override config")
     ap.add_argument("--tasks", nargs="*", default=None, help="subset of task names")
@@ -82,6 +84,12 @@ def main() -> None:
     if tok.pad_token_id is None:
         tok.pad_token = tok.eos_token
     load_kw: dict = {"device_map": args.device_map}
+    if args.max_memory:
+        mm = {}
+        for part in args.max_memory.split(","):
+            k, v = part.split("=")
+            mm[int(k) if k.isdigit() else k] = v
+        load_kw["max_memory"] = mm
     if args.load_in_8bit:
         from transformers import BitsAndBytesConfig
 
@@ -98,6 +106,16 @@ def main() -> None:
     import transformers
 
     engine_tag = f"transformers=={transformers.__version__}; torch=={torch.__version__}"
+    # Provenance and the resolved generation defaults (anything not overridden below is inherited from
+    # the checkpoint's generation_config.json; we neutralise the penalties explicitly and log the rest).
+    hf_revision = getattr(model.config, "_commit_hash", None)
+    gen_defaults = {k: v for k, v in model.generation_config.to_dict().items()
+                    if k in ("temperature", "top_k", "top_p", "repetition_penalty", "no_repeat_ngram_size",
+                             "typical_p", "min_p", "eos_token_id", "pad_token_id", "bos_token_id", "do_sample", "num_beams")}
+    device_map_used = getattr(model, "hf_device_map", None)
+    print(f"[engine-check] hf_revision={hf_revision} eos_ids={eos_ids} generation_config={gen_defaults}")
+    if device_map_used:
+        print(f"[engine-check] device_map={device_map_used}")
 
     store = RecordStore(args.out)
     done = store.existing_ids()
@@ -139,7 +157,8 @@ def main() -> None:
                                    item_id=batch[0][1].item_id, repetition=batch[0][2])
                 torch.manual_seed(seed)
                 gen_kw: dict = dict(max_new_tokens=task.max_new_tokens, eos_token_id=eos_ids,
-                                    pad_token_id=tok.pad_token_id)
+                                    pad_token_id=tok.pad_token_id, repetition_penalty=1.0,
+                                    no_repeat_ngram_size=0, num_beams=1)
                 if sampler == "greedy":
                     gen_kw.update(do_sample=False)
                 else:
@@ -149,13 +168,15 @@ def main() -> None:
                     out = model.generate(**enc, **gen_kw)
                 latency = time.perf_counter() - t0
                 n_prompt = enc["input_ids"].shape[1]
-                for (rid, it, r), row in zip(batch, out):
+                for bi, ((rid, it, r), row) in enumerate(zip(batch, out)):
                     comp = row[n_prompt:]
                     # strip padding and count real completion tokens; stopped = an EOS was produced
                     comp_list = comp.tolist()
                     stopped = any(t in eos_ids for t in comp_list)
+                    end_token = None
                     if stopped:
                         first_eos = next(i for i, t in enumerate(comp_list) if t in eos_ids)
+                        end_token = comp_list[first_eos]
                         comp_list = comp_list[:first_eos]
                     comp_list = [t for t in comp_list if t != tok.pad_token_id or tok.pad_token_id in eos_ids]
                     text = tok.decode(comp_list, skip_special_tokens=True)
@@ -163,12 +184,16 @@ def main() -> None:
                     rec = GenerationRecord(
                         id=rid, model=args.model_name, quant=quant, sampler=sampler,
                         params={"engine": "transformers", "dtype": "int8" if args.load_in_8bit else "bf16",
+                                "hf_model": args.hf_model, "hf_revision": hf_revision,
                                 "samplers": ["temperature"], "temperature": temp, "top_k": 0, "top_p": 1.0,
-                                "n_predict": task.max_new_tokens, "batch_size": len(batch)},
+                                "repetition_penalty": 1.0, "eos_ids": list(eos_ids), "end_token": end_token,
+                                "generation_config": gen_defaults, "device_map": args.device_map,
+                                "n_predict": task.max_new_tokens, "batch_size": len(batch),
+                                "batch_index": start // args.batch_size, "batch_row": bi},
                         temperature=temp, task=task.name, item_id=it.item_id, repetition=r, seed=seed,
                         prompt_hash=prompt_sha256(rendered[it.item_id]), raw_output=text,
                         parsed_answer=g.parsed_answer, parse_method=g.parse_method, gold=g.gold,
-                        correct=g.correct, n_prompt_tokens=int((enc["attention_mask"][0] == 1).sum()),
+                        correct=g.correct, n_prompt_tokens=int((enc["attention_mask"][bi] == 1).sum()),
                         n_completion_tokens=len(comp_list), latency_s=latency,
                         tokens_per_second=None, stopped=stopped, server_commit=engine_tag,
                         timestamp=dt.datetime.now(dt.timezone.utc).isoformat(),
