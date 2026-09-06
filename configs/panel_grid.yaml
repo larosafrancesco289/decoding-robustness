@@ -1,0 +1,99 @@
+# Full 8-configuration decoding grid at Q8_0 for a 2026-panel model that trips the prespecified flag in
+# configs/temp_sweep_2026.yaml (accuracy drop T0.7->T1.3 >= 15 pp, or cap-hit rise >= 20 pp, or
+# strict-parse fall >= 20 pp, on either task). Same decoding grid, tasks, item panels, seeds, K and
+# server settings as configs/full_matrix.yaml, on the v0.4.0 build the panel ran on. All four panel
+# checkpoints are listed so the run is selected with --only-model <flagged>; the others are skipped.
+# ~5 GPU-h per model on Sicily. Output results/panel_grid/<model>.jsonl (gen_tables.py / App A rows).
+
+name: panel-grid-2026
+phase: panel_grid
+output_dir: results/panel_grid
+
+checkpoints:
+  - name: hermes-3-llama-3.1-8b
+    family: llama
+    params_b: 8.0
+    hf_repo: bartowski/Hermes-3-Llama-3.1-8B-GGUF
+    quant_files:
+      Q8_0: Hermes-3-Llama-3.1-8B-Q8_0.gguf
+
+  - name: qwen3.5-9b
+    family: qwen3.5
+    params_b: 9.0
+    hf_repo: bartowski/Qwen_Qwen3.5-9B-GGUF
+    quant_files:
+      Q8_0: Qwen_Qwen3.5-9B-Q8_0.gguf
+
+  - name: gemma-4-e4b-it
+    family: gemma4
+    params_b: 8.0
+    hf_repo: bartowski/google_gemma-4-E4B-it-GGUF
+    quant_files:
+      Q8_0: google_gemma-4-E4B-it-Q8_0.gguf
+    # llama.cpp v0.4.0 forces add_bos_token=true for Gemma 4 (it ignores the --override-kv the
+    # runner passes), so the server prepends <bos> itself; render without one to keep a single BOS.
+    bos_token: ""
+
+  - name: olmo-3-7b-instruct
+    family: olmo3
+    params_b: 7.0
+    hf_repo: bartowski/allenai_Olmo-3-7B-Instruct-GGUF
+    quant_files:
+      Q8_0: allenai_Olmo-3-7B-Instruct-Q8_0.gguf
+
+quant_levels: [Q8_0]
+
+samplers:
+  - method: greedy
+  - method: temperature
+  - method: top_p
+    top_p: 0.95
+  - method: top_k
+    top_k: 40
+  - method: min_p
+    min_p: 0.05
+  - method: top_n_sigma
+    top_n_sigma: 1.0
+  - method: min_p
+    min_p: 0.05
+    chain: [min_p, temperature]
+  - method: top_p
+    top_p: 0.95
+    chain: [top_p, temperature]
+
+temperatures: [0.7, 1.0, 1.3]
+
+tasks:
+  - name: gsm8k
+    hf_dataset: openai/gsm8k
+    hf_config: main
+    revision: main
+    split: test
+    subset_size: 50
+    max_new_tokens: 512
+    parser: gsm8k_numeric
+
+  - name: mmlu_pro
+    hf_dataset: TIGER-Lab/MMLU-Pro
+    revision: main
+    split: test
+    subset_size: 50
+    max_new_tokens: 1024
+    parser: mmlu_pro_letter
+
+generation:
+  global_seed: 0
+  repetitions: 3
+
+server:
+  host: 127.0.0.1
+  port: 8080
+  llama_cpp_commit: 5266f24da75dc449bd56cbed7addb9c8e4a6a73e   # llama.cpp tag v0.4.0 (2026-09-04), verified with git rev-parse on Sicily
+  n_ctx: 16384
+  n_gpu_layers: -1
+  parallel: 8
+  # The pinned 5aba5364 build had jinja off by default; v0.4.0 turns it on, which (a) fails at
+  # start-up on OLMo 3's tool-call template and (b) runs a PEG output parser on /completion that
+  # rejects cap-length degenerate streams with an HTTP 500 carrying no text (the runner records
+  # those as zero-token cap hits, as it does the pinned build's server-recovered streams).
+  extra_args: ["--no-jinja"]
