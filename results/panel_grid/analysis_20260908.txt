@@ -1,0 +1,52 @@
+Panel grid first analysis, 2026-09-08. Paired item bootstrap (2000 draws, seed 0), accuracy in pp.
+Records: results/panel_grid/{hermes-3-llama-3.1-8b,qwen3.5-9b,olmo-3-7b-instruct}.jsonl, 6,400 each, Q8_0, llama.cpp v0.4.0.
+Columns: arm at T1.3 minus plain temperature at T1.3; arm at T1.3 minus plain temperature at T0.7; arm minus plain at T0.7 / T1.0.
+
+== hermes-3-llama-3.1-8b
+ gsm8k plain T0.7 71.3, plain T1.3 60.0, drop -11.3 [-18.7,-4.0]
+   min_p->temperature         acc T1.3  74.7  vs plain T1.3 +14.7 [  6.7, 22.7]  vs plain T0.7  +3.3 [ -2.7,  9.3]  gain T0.7/T1.0 +4.0/+0.0
+   temperature->min_p         acc T1.3  71.3  vs plain T1.3 +11.3 [  3.3, 19.3]  vs plain T0.7  +0.0 [ -6.0,  6.7]  gain T0.7/T1.0 +4.0/-1.3
+   temperature->top_k         acc T1.3  67.3  vs plain T1.3  +7.3 [ -0.7, 15.3]  vs plain T0.7  -4.0 [-11.3,  2.7]  gain T0.7/T1.0 +2.7/-4.7
+   temperature->top_n_sigma   acc T1.3  77.3  vs plain T1.3 +17.3 [ 10.7, 24.7]  vs plain T0.7  +6.0 [  0.0, 12.7]  gain T0.7/T1.0 -0.7/-2.7
+   temperature->top_p         acc T1.3  71.3  vs plain T1.3 +11.3 [  2.7, 20.0]  vs plain T0.7  +0.0 [ -6.7,  6.0]  gain T0.7/T1.0 +3.3/+2.7
+   top_p->temperature         acc T1.3  77.3  vs plain T1.3 +17.3 [  8.7, 26.0]  vs plain T0.7  +6.0 [ -0.7, 12.7]  gain T0.7/T1.0 +0.7/-4.0
+ mmlu_pro plain T0.7 42.7, plain T1.3 26.0, drop -16.7 [-24.7,-8.7]
+   min_p->temperature         acc T1.3  44.0  vs plain T1.3 +18.0 [ 10.0, 26.0]  vs plain T0.7  +1.3 [ -6.0, 10.0]  gain T0.7/T1.0 +1.3/+2.0
+   temperature->min_p         acc T1.3  46.0  vs plain T1.3 +20.0 [ 12.0, 28.7]  vs plain T0.7  +3.3 [ -3.3, 10.0]  gain T0.7/T1.0 +1.3/-0.7
+   temperature->top_k         acc T1.3  34.7  vs plain T1.3  +8.7 [  2.0, 16.0]  vs plain T0.7  -8.0 [-14.7, -2.0]  gain T0.7/T1.0 +0.0/-0.7
+   temperature->top_n_sigma   acc T1.3  38.7  vs plain T1.3 +12.7 [  4.0, 22.0]  vs plain T0.7  -4.0 [-12.0,  3.3]  gain T0.7/T1.0 +2.0/+8.0
+   temperature->top_p         acc T1.3  38.7  vs plain T1.3 +12.7 [  5.3, 20.0]  vs plain T0.7  -4.0 [-10.7,  1.3]  gain T0.7/T1.0 -1.3/+4.7
+   top_p->temperature         acc T1.3  43.3  vs plain T1.3 +17.3 [  8.0, 26.0]  vs plain T0.7  +0.7 [ -6.0,  7.3]  gain T0.7/T1.0 +12.0/+4.0
+
+== qwen3.5-9b
+ gsm8k plain T0.7 81.3, plain T1.3 74.0, drop -7.3 [-13.3,-2.0]
+   min_p->temperature         acc T1.3  79.3  vs plain T1.3  +5.3 [ -1.3, 12.0]  vs plain T0.7  -2.0 [ -8.0,  3.3]  gain T0.7/T1.0 +0.7/-2.0
+   temperature->min_p         acc T1.3  83.3  vs plain T1.3  +9.3 [  0.7, 17.3]  vs plain T0.7  +2.0 [ -4.7,  8.0]  gain T0.7/T1.0 +1.3/+2.7
+   temperature->top_k         acc T1.3  77.3  vs plain T1.3  +3.3 [ -4.0, 10.7]  vs plain T0.7  -4.0 [-10.0,  1.3]  gain T0.7/T1.0 +0.0/+0.7
+   temperature->top_n_sigma   acc T1.3  81.3  vs plain T1.3  +7.3 [  2.0, 13.3]  vs plain T0.7  +0.0 [ -4.7,  4.7]  gain T0.7/T1.0 -2.7/+4.7
+   temperature->top_p         acc T1.3  80.0  vs plain T1.3  +6.0 [  1.3, 11.3]  vs plain T0.7  -1.3 [ -5.3,  2.7]  gain T0.7/T1.0 -0.7/+0.7
+   top_p->temperature         acc T1.3  82.0  vs plain T1.3  +8.0 [  2.0, 14.7]  vs plain T0.7  +0.7 [ -3.3,  5.3]  gain T0.7/T1.0 +1.3/+0.7
+ mmlu_pro plain T0.7 60.0, plain T1.3 38.0, drop -22.0 [-31.3,-13.3]
+   min_p->temperature         acc T1.3  57.3  vs plain T1.3 +19.3 [ 11.3, 28.7]  vs plain T0.7  -2.7 [ -7.3,  2.0]  gain T0.7/T1.0 +0.0/-1.3
+   temperature->min_p         acc T1.3  55.3  vs plain T1.3 +17.3 [  9.3, 26.0]  vs plain T0.7  -4.7 [-10.7,  1.3]  gain T0.7/T1.0 +1.3/-2.7
+   temperature->top_k         acc T1.3  53.3  vs plain T1.3 +15.3 [  8.0, 24.0]  vs plain T0.7  -6.7 [-12.7, -1.3]  gain T0.7/T1.0 -0.7/-2.0
+   temperature->top_n_sigma   acc T1.3  59.3  vs plain T1.3 +21.3 [ 12.7, 29.3]  vs plain T0.7  -0.7 [ -6.7,  5.3]  gain T0.7/T1.0 -2.0/+2.7
+   temperature->top_p         acc T1.3  53.3  vs plain T1.3 +15.3 [  9.3, 22.7]  vs plain T0.7  -6.7 [-14.0,  0.0]  gain T0.7/T1.0 +2.0/+2.0
+   top_p->temperature         acc T1.3  54.0  vs plain T1.3 +16.0 [  9.3, 24.0]  vs plain T0.7  -6.0 [-11.3, -1.3]  gain T0.7/T1.0 -3.3/+2.0
+
+== olmo-3-7b-instruct
+ gsm8k plain T0.7 88.7, plain T1.3 76.0, drop -12.7 [-20.0,-6.0]
+   min_p->temperature         acc T1.3  86.0  vs plain T1.3 +10.0 [  4.0, 17.3]  vs plain T0.7  -2.7 [ -9.3,  4.0]  gain T0.7/T1.0 -5.3/+3.3
+   temperature->min_p         acc T1.3  78.0  vs plain T1.3  +2.0 [ -4.7,  9.3]  vs plain T0.7 -10.7 [-16.7, -4.7]  gain T0.7/T1.0 -4.0/+2.0
+   temperature->top_k         acc T1.3  78.7  vs plain T1.3  +2.7 [ -4.0,  8.7]  vs plain T0.7 -10.0 [-17.3, -3.3]  gain T0.7/T1.0 -4.0/+4.0
+   temperature->top_n_sigma   acc T1.3  86.0  vs plain T1.3 +10.0 [  3.3, 16.7]  vs plain T0.7  -2.7 [ -8.0,  2.7]  gain T0.7/T1.0 -2.0/+2.7
+   temperature->top_p         acc T1.3  82.0  vs plain T1.3  +6.0 [  1.3, 10.7]  vs plain T0.7  -6.7 [-12.7, -0.7]  gain T0.7/T1.0 -4.0/+7.3
+   top_p->temperature         acc T1.3  81.3  vs plain T1.3  +5.3 [ -0.7, 11.3]  vs plain T0.7  -7.3 [-14.7,  0.0]  gain T0.7/T1.0 -4.7/+4.0
+ mmlu_pro plain T0.7 42.0, plain T1.3 26.7, drop -15.3 [-22.7,-8.0]
+   min_p->temperature         acc T1.3  40.0  vs plain T1.3 +13.3 [  6.7, 20.7]  vs plain T0.7  -2.0 [ -6.7,  3.3]  gain T0.7/T1.0 +0.0/+3.3
+   temperature->min_p         acc T1.3  42.7  vs plain T1.3 +16.0 [  8.7, 24.0]  vs plain T0.7  +0.7 [ -5.3,  6.7]  gain T0.7/T1.0 +1.3/-0.7
+   temperature->top_k         acc T1.3  37.3  vs plain T1.3 +10.7 [  4.0, 17.3]  vs plain T0.7  -4.7 [-11.3,  2.7]  gain T0.7/T1.0 -2.0/-0.7
+   temperature->top_n_sigma   acc T1.3  40.0  vs plain T1.3 +13.3 [  5.3, 22.0]  vs plain T0.7  -2.0 [ -8.0,  3.3]  gain T0.7/T1.0 -0.7/+1.3
+   temperature->top_p         acc T1.3  36.7  vs plain T1.3 +10.0 [  2.7, 18.0]  vs plain T0.7  -5.3 [-12.7,  2.0]  gain T0.7/T1.0 +1.3/-2.0
+   top_p->temperature         acc T1.3  44.7  vs plain T1.3 +18.0 [ 10.7, 26.7]  vs plain T0.7  +2.7 [ -1.3,  7.3]  gain T0.7/T1.0 +1.3/+2.7
+
