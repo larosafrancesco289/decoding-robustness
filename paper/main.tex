@@ -571,7 +571,7 @@ and continues as token noise until the budget.}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figA_outcomes_gsm8k}
+\includegraphics[width=0.93\columnwidth]{figA_outcomes_gsm8k}
 \caption{Outcome of every GSM8K generation under plain temperature sampling at Q8\_0, as in
 Figure~\ref{fig:outcomes}. On GSM8K a degenerate generation usually contains a number, so part
 of the degeneration is graded through the flexible path; the capped flag records it.}
@@ -632,18 +632,32 @@ in capped and strict-parse rates. Models sorted as in Figure~\ref{fig:drops}.}
 \footnotesize\setlength{\tabcolsep}{4pt}\input{tables/tab_temp_full}
 \end{table*}
 
-\begin{table}[t]\centering
+\begin{table}[htbp]\centering
 \caption{Plain-temperature accuracy drop $T{=}0.7 \to 1.3$ (pp) at each quantization level of
 the main grid (150 generations per cell).}
 \label{tab:quant-drops}
 \footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\columnwidth}{!}{\input{tables/tab_quant_drops}}
 \end{table}
 
-\begin{table}[t]\centering
+\begin{table}[htbp]\centering
 \caption{Stratified MMLU-Pro subset against the fixed business subset: plain-temperature
 accuracy at Q8\_0 and the drop with its interval.}
 \label{tab:strat}
 \footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\columnwidth}{!}{\input{tables/tab_strat}}
+\end{table}
+
+\section{Temperature ladder}
+\label{app:ladder}
+
+Table~\ref{tab:ladder} gives the plain-temperature drop at each ladder temperature against the
+model's own accuracy at 0.7, with intervals. The ladder is a separate run from the main grid,
+and its 1.3 step differs from Table~\ref{tab:temp-full} by amounts within the intervals.
+
+\begin{table}[htbp]\centering
+\caption{Plain-temperature accuracy drop against the model's own $T{=}0.7$ accuracy (pp, 95\%
+item-clustered intervals; Q8\_0).}
+\label{tab:ladder}
+\footnotesize\setlength{\tabcolsep}{3pt}\resizebox{\columnwidth}{!}{\input{tables/tab_ladder}}
 \end{table}
 
 \section{Sampler results in full}
@@ -659,7 +673,7 @@ correlation) gives the same point estimates and intervals that differ by at most
 temperature relative to greedy decoding for all 60 combinations. The two quantities share the
 plain-temperature baseline, so the association is descriptive.
 
-\begin{figure}[t]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\columnwidth]{figA_gain_loss}
 \caption{Gain of each truncation rule over plain temperature against the loss of plain
@@ -669,14 +683,14 @@ with a sampler grid (Q8\_0). The diagonal marks full recovery to greedy accuracy
 \end{figure}
 
 \begin{table*}[p]\centering
-\caption{GSM8K accuracy (\%) by configuration and temperature.}
+\caption{GSM8K accuracy (\%) by configuration and temperature (main-grid models pooled over quantization levels; the three flagged models at Q8\_0).}
 \label{tab:grid-gsm8k}
-\footnotesize\input{tables/tab_grid_gsm8k}
+\footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\textwidth}{!}{\input{tables/tab_grid_gsm8k}}
 \end{table*}
 \begin{table*}[p]\centering
-\caption{MMLU-Pro accuracy (\%) by configuration and temperature.}
+\caption{MMLU-Pro accuracy (\%) by configuration and temperature (main-grid models pooled over quantization levels; the three flagged models at Q8\_0).}
 \label{tab:grid-mmlu}
-\footnotesize\input{tables/tab_grid_mmlu_pro}
+\footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\textwidth}{!}{\input{tables/tab_grid_mmlu_pro}}
 \end{table*}
 \begin{table*}[p]\centering
 \caption{Paired accuracy difference of each configuration against plain temperature on the same
@@ -685,19 +699,5 @@ flagged models at Q8\_0). Bold: interval above zero.}
 \label{tab:contrasts}
 \scriptsize\setlength{\tabcolsep}{3pt}\resizebox{\textwidth}{!}{\input{tables/tab_contrasts}}
 \end{table*}
-
-\section{Temperature ladder}
-\label{app:ladder}
-
-Table~\ref{tab:ladder} gives the plain-temperature drop at each ladder temperature against the
-model's own accuracy at 0.7, with intervals. The ladder is a separate run from the main grid,
-and its 1.3 step differs from Table~\ref{tab:temp-full} by amounts within the intervals.
-
-\begin{table}[t]\centering
-\caption{Plain-temperature accuracy drop against the model's own $T{=}0.7$ accuracy (pp, 95\%
-item-clustered intervals; Q8\_0).}
-\label{tab:ladder}
-\footnotesize\setlength{\tabcolsep}{3pt}\resizebox{\columnwidth}{!}{\input{tables/tab_ladder}}
-\end{table}
 
 \end{document}

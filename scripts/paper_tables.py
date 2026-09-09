@@ -229,21 +229,38 @@ def tab_engine_full(df):
 
 # ------------------------------------------------------------------ appendix: per-configuration grids
 def tab_grids(df):
+    full = pd.read_parquet("results/paper_records.parquet")  # includes the temperature-last ablations
     for task in TASKS:
-        lines = ["\\begin{tabular}{llccc}", "\\toprule", "Model & Configuration & $T{=}0.7$ & $T{=}1.0$ & $T{=}1.3$ \\\\", "\\midrule"]
-        for src, models in (("main_grid", GRID7), ("panel_grid", PANEL3)):
-            d = df[(df.source == src) & (df.task == task)] if src == "main_grid" else df[(df.source == src) & (df.task == task)]
-            for m in models:
+        halves = []
+        for src, models in (("main_grid", GRID7[:5]), ("main_grid", GRID7[5:]), ("panel_grid", PANEL3)):
+            pass
+        # left half: first five grid models; right half: last two grid models + three flagged models
+        groups = [[("main_grid", m) for m in GRID7[:5]], [("main_grid", m) for m in GRID7[5:]] + [("panel_grid", m) for m in PANEL3]]
+        for grp in groups:
+            rows = []
+            for src, m in grp:
+                d = full[(full.source == src) & (full.task == task) & (full.model == m)]
                 for i, (samp, chain) in enumerate(CFG_ORDER):
-                    g = d[(d.model == m) & (d.sampler == samp) & (d.chain == chain)]
+                    g = d[(d.sampler == samp) & (d.chain == chain)]
                     if samp == "greedy":
                         cells = [f"{g.correct.mean() * 100:.1f}", "--", "--"]
                     else:
                         cells = [f"{g[g['T'] == T].correct.mean() * 100:.1f}" for T in (0.7, 1.0, 1.3)]
-                    lines.append(f"{LABEL[m] if i == 0 else ''} & {CFG_TEX[(samp, chain)]} & " + " & ".join(cells) + " \\\\")
-                lines.append("\\midrule")
-        lines[-1] = "\\bottomrule"
-        lines.append("\\end{tabular}")
+                    rows.append(f"{LABEL[m] if i == 0 else ''} & {CFG_TEX[(samp, chain)]} & " + " & ".join(cells))
+                rows.append("\\midrule")
+            halves.append(rows[:-1])
+        n = max(len(h) for h in halves)
+        for h in halves:
+            h += [" & & & & "] * (n - len(h))
+        lines = ["\\begin{tabular}{llccc@{\\hspace{14pt}}llccc}", "\\toprule",
+                 "Model & Configuration & 0.7 & 1.0 & 1.3 & Model & Configuration & 0.7 & 1.0 & 1.3 \\\\", "\\midrule"]
+        for a, b in zip(*halves):
+            if a == "\\midrule" and b == "\\midrule":
+                lines.append("\\midrule"); continue
+            aa = " & & & & " if a == "\\midrule" else a
+            bb = " & & & & " if b == "\\midrule" else b
+            lines.append(f"{aa} & {bb} \\\\")
+        lines += ["\\bottomrule", "\\end{tabular}"]
         write(f"tab_grid_{task}", lines)
 
 
