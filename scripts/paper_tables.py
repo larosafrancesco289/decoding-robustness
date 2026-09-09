@@ -23,6 +23,7 @@ sys.path.insert(0, "scripts")
 from paper_figures import LABEL, RULES, TASK_NAME, TASKS, drops, item_acc, load, model_order, paired_boot, temp_slice  # noqa: E402
 
 OUT = Path("paper/tables")
+TOL = 1e-9
 NUM = {}
 GRID7 = ["llama-3.1-8b-instruct", "mistral-7b-instruct-v0.3", "qwen2.5-7b-instruct", "gemma-3-12b-it", "qwen3-8b", "qwen3-4b", "qwen3-1.7b"]
 PANEL3 = ["hermes-3-llama-3.1-8b", "qwen3.5-9b", "olmo-3-7b-instruct"]
@@ -49,6 +50,7 @@ def tab_bound():
     S = json.load(open("results/sampler_bound_all_summary.json"))
     rows = [
         ("six robust grid models", "0.7, 1.0", "pooled", S["main grid robust T<=1.0"]),
+        ("six robust grid models, Q8\\_0 only", "0.7, 1.0", "Q8", S["main grid robust Q8 T<=1.0"]),
         ("six robust grid models", "1.3", "pooled", None),
         ("Llama-3.1-8B", "0.7, 1.0", "pooled", S["main grid llama T<=1.0"]),
         ("three flagged panel models", "0.7, 1.0", "Q8", S["flagged-model grid Q8 T<=1.0"]),
@@ -57,17 +59,17 @@ def tab_bound():
     # robust six at 1.3 is not in the summary; compute from the json
     out = json.load(open("results/sampler_bound_all.json"))
     r13 = [o for o in out if o["source"] == "main_grid" and o["T"] == 1.3 and o["model"] != "llama-3.1-8b-instruct"]
-    rows[1] = ("six robust grid models", "1.3", "pooled", dict(n=len(r13), max_gain=max(o["mean"] for o in r13),
-                                                              simultaneous=float("nan"), above=sum(o["lo"] > 0 for o in r13)))
+    rows[2] = ("six robust grid models", "1.3", "pooled", dict(n=len(r13), max_gain=max(o["mean"] for o in r13),
+                                                              simultaneous=float("nan"), above=sum(o["lo"] > TOL for o in r13)))
     lines = ["\\begin{tabular}{llrrrr}", "\\toprule",
-             "Models & $T$ & $n$ & largest gain & 95\\% bound & CIs $>0$ \\\\", "\\midrule"]
+             "Models & $T$ & contrasts & largest gain (pp) & 95\\% bound (pp) & intervals $>0$ \\\\", "\\midrule"]
     for name, T, prec, s in rows:
         sim = "--" if s["simultaneous"] != s["simultaneous"] else f"{s['simultaneous']:.1f}"
         lines.append(f"{name} & {T} & {s['n']} & ${s['max_gain']:+.1f}$ & {sim} & {s['above']} \\\\")
     lines += ["\\bottomrule", "\\end{tabular}"]
     write("tab_bound", lines)
     NUM["bound"] = {k: v for k, v in S.items()}
-    NUM["bound"]["robust six T1.3"] = rows[1][3]
+    NUM["bound"]["robust six T1.3"] = rows[2][3]
 
 
 # ------------------------------------------------------------------ appendix: temperature table (13 models)
@@ -102,9 +104,9 @@ def tab_temp_full(df):
 # ------------------------------------------------------------------ appendix: survivor table
 def tab_survivor(df, order):
     d = temp_slice(df)
-    lines = ["\\begin{tabular}{llrrrrrr}", "\\toprule",
-             " & & \\multicolumn{2}{c}{$T{=}0.7$} & \\multicolumn{4}{c}{$T{=}1.3$} \\\\",
-             "Model & Task & strict \\% & acc$\\mid$strict & strict \\% & $n$ & acc$\\mid$strict & greedy, same items \\\\", "\\midrule"]
+    lines = ["\\begin{tabular}{llrrrrrrr}", "\\toprule",
+             " & & \\multicolumn{3}{c}{$T{=}0.7$} & \\multicolumn{4}{c}{$T{=}1.3$} \\\\",
+             "Model & Task & strict \\% & acc$\\mid$strict & greedy, same items & strict \\% & $n$ & acc$\\mid$strict & greedy, same items \\\\", "\\midrule"]
     rec = {}
     for m in order:
         for i, task in enumerate(TASKS):
@@ -116,7 +118,7 @@ def tab_survivor(df, order):
                 st = s[s.parse == "strict"]
                 vals[T] = dict(share=len(st) / len(s) * 100, n=len(st), acc=st.correct.mean() * 100, greedy=greedy.reindex(st.item_id).mean() * 100)
             rec[(m, task)] = vals
-            lines.append(f"{LABEL[m] if i == 0 else ''} & {TASK_NAME[task]} & {vals[0.7]['share']:.0f} & {vals[0.7]['acc']:.1f} & "
+            lines.append(f"{LABEL[m] if i == 0 else ''} & {TASK_NAME[task]} & {vals[0.7]['share']:.0f} & {vals[0.7]['acc']:.1f} & {vals[0.7]['greedy']:.1f} & "
                          f"{vals[1.3]['share']:.0f} & {vals[1.3]['n']} & {vals[1.3]['acc']:.1f} & {vals[1.3]['greedy']:.1f} \\\\")
     lines += ["\\bottomrule", "\\end{tabular}"]
     write("tab_survivor", lines)
@@ -232,8 +234,6 @@ def tab_grids(df):
     full = pd.read_parquet("results/paper_records.parquet")  # includes the temperature-last ablations
     for task in TASKS:
         halves = []
-        for src, models in (("main_grid", GRID7[:5]), ("main_grid", GRID7[5:]), ("panel_grid", PANEL3)):
-            pass
         # left half: first five grid models; right half: last two grid models + three flagged models
         groups = [[("main_grid", m) for m in GRID7[:5]], [("main_grid", m) for m in GRID7[5:]] + [("panel_grid", m) for m in PANEL3]]
         for grp in groups:
@@ -266,31 +266,28 @@ def tab_grids(df):
 
 # ------------------------------------------------------------------ appendix: all paired contrasts incl. ablations
 def tab_contrasts(df):
-    d = df.copy()
-    lines = ["\\begin{tabular}{llc" + "l" * 6 + "}", "\\toprule",
-             "Model & Task & $T$ & top-$p$ & top-$k$ & min-$p$ & top-$n\\sigma$ & top-$p$ (t.\\ last) & min-$p$ (t.\\ last) \\\\", "\\midrule"]
     full = pd.read_parquet("results/paper_records.parquet")  # includes tlast
     rec = {}
-    for src, models in (("main_grid", GRID7), ("panel_grid", PANEL3)):
-        s = full[full.source == src]
-        for m in models:
-            first = True
-            for task in TASKS:
-                for T in (0.7, 1.0, 1.3):
-                    g = s[(s.model == m) & (s.task == task) & (s["T"] == T)]
+    for task in TASKS:
+        lines = ["\\begin{tabular}{lc" + "l" * 6 + "}", "\\toprule",
+                 "Model & $T$ & top-$p$ & top-$k$ & min-$p$ & top-$n\\sigma$ & top-$p$ (temp.\\ last) & min-$p$ (temp.\\ last) \\\\", "\\midrule"]
+        for src, models in (("main_grid", GRID7), ("panel_grid", PANEL3)):
+            s = full[(full.source == src) & (full.task == task)]
+            for m in models:
+                for i, T in enumerate((0.7, 1.0, 1.3)):
+                    g = s[(s.model == m) & (s["T"] == T)]
                     base = item_acc(g[(g.sampler == "temperature") & (g.chain == "tfirst")])
                     cells = []
                     for samp, chain in [(r, "tfirst") for r in RULES] + [("top_p", "tlast"), ("min_p", "tlast")]:
                         x = item_acc(g[(g.sampler == samp) & (g.chain == chain)])
                         pt, lo, hi = paired_boot(x, base)
-                        cells.append(ci(pt, lo, hi, bold=lo > 0))
+                        cells.append(ci(pt, lo, hi, bold=lo > TOL))
                         rec[f"{m}|{task}|{T}|{samp}|{chain}"] = dict(pt=pt, lo=lo, hi=hi)
-                    lines.append(f"{LABEL[m] if first else ''} & {TASK_NAME[task]} & {T} & " + " & ".join(cells) + " \\\\")
-                    first = False
-            lines.append("\\midrule")
-    lines[-1] = "\\bottomrule"
-    lines.append("\\end{tabular}")
-    write("tab_contrasts", lines)
+                    lines.append(f"{LABEL[m] if i == 0 else ''} & {T} & " + " & ".join(cells) + " \\\\")
+                lines.append("\\midrule")
+        lines[-1] = "\\bottomrule"
+        lines.append("\\end{tabular}")
+        write(f"tab_contrasts_{task}", lines)
     NUM["contrasts"] = rec
 
 

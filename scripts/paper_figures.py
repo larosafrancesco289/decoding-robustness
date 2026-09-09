@@ -50,7 +50,7 @@ RULE_TEX = {"temperature": "plain temperature", "top_p": "top-$p$", "top_k": "to
 # Okabe-Ito, fixed assignment
 C_FRAGILE, C_ROBUST, C_GRAY = "#D55E00", "#0072B2", "#8C8C8C"
 RULE_COLOR = {"temperature": "#D55E00", "top_p": "#E69F00", "top_k": "#8C8C8C", "min_p": "#0072B2", "top_n_sigma": "#009E73"}
-RULE_MARK = {"top_p": "o", "top_k": "s", "min_p": "D", "top_n_sigma": "^"}
+RULE_MARK = {"temperature": "o", "top_p": "s", "top_k": "P", "min_p": "D", "top_n_sigma": "^"}
 T_COLOR = {0.7: "#9ECAE1", 1.0: "#4292C6", 1.3: "#08306B"}
 RNG = np.random.default_rng(0)
 IDX = RNG.integers(0, 50, (B, 50))
@@ -158,8 +158,8 @@ def fig_outcomes(df, task, name, order, frag):
     t = outcome_shares(d, task)
     cats = [("correct", C_ROBUST, "correct"), ("wrong", "#C9C9C9", "answered, wrong"), ("noanswer", C_FRAGILE, "capped or unparseable")]
     Ts = [0.7, 1.0, 1.3]
-    fig, ax = plt.subplots(figsize=(3.3, 4.6))
-    h, gap, group = 0.24, 0.05, 1.0
+    fig, ax = plt.subplots(figsize=(3.3, 4.8))
+    h, gap, group = 0.26, 0.04, 1.0
     ylab, ypos = [], []
     for gi, m in enumerate(order):
         base = -gi * group
@@ -171,7 +171,7 @@ def fig_outcomes(df, task, name, order, frag):
                 ax.barh(yi, v, left=left, height=h, color=col, edgecolor="white", linewidth=0.5)
                 left += v
             if gi == 0:
-                ax.text(101.5, yi, f"$T$={T}", va="center", ha="left", fontsize=6.3, color="#555555")
+                ax.text(101.5, yi, f"$T$={T}", va="center", ha="left", fontsize=6.8, color="#555555")
         ylab.append(LABEL[m]); ypos.append(base)
     ax.set_yticks(ypos)
     ax.set_yticklabels(ylab)
@@ -187,7 +187,7 @@ def fig_outcomes(df, task, name, order, frag):
     ax.axhline(-(n_frag - 0.5) * group, color="#BBBBBB", lw=0.6, ls=(0, (2, 2)), zorder=0)
     handles = [plt.Rectangle((0, 0), 1, 1, color=col) for _, col, _ in cats]
     ax.legend(handles, [lab for _, _, lab in cats], loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=3,
-              handlelength=1.0, handleheight=0.8, columnspacing=0.8, handletextpad=0.4, borderaxespad=0.0, fontsize=7)
+              handlelength=1.0, handleheight=0.8, columnspacing=0.8, handletextpad=0.4, borderaxespad=0.0, fontsize=7.8)
     ax.set_ylim(-(len(order) - 1) * group - 0.45, 0.45)
     save(fig, name)
 
@@ -225,7 +225,7 @@ def fig3_gain_loss(df):
         s = c[c["T"] == T]
         for rule in RULES:
             ss = s[s.rule == rule]
-            ax.scatter(ss.loss, ss.gain, s=15, marker=RULE_MARK[rule], color=T_COLOR[T], alpha=0.85,
+            ax.scatter(ss.loss, ss.gain, s=13, marker=RULE_MARK[rule], color=T_COLOR[T], alpha=0.7,
                        edgecolors="white", linewidths=0.4, zorder=3)
     # legend: temperature by colour, rule by marker
     from matplotlib.lines import Line2D
@@ -237,8 +237,8 @@ def fig3_gain_loss(df):
     ax.set_xlim(lim_lo, lim_hi)
     ax.set_ylim(lim_lo, lim_hi)
     ax.set_aspect("equal")
-    ax.set_xlabel("loss under plain temperature (pp)\ngreedy accuracy $-$ plain-temperature accuracy")
-    ax.set_ylabel("gain from truncation (pp)\nrule accuracy $-$ plain-temperature accuracy")
+    ax.set_xlabel("plain-temperature loss versus greedy (pp)")
+    ax.set_ylabel("truncation gain versus plain temperature (pp)")
     save(fig, "figA_gain_loss")
     b = c.sort_values("gain", ascending=False).drop_duplicates(["model", "task", "T"])
     print("  r(best gain, loss) =", np.corrcoef(b.loss, b.gain)[0, 1].round(3), "; r(all rules) =", np.corrcoef(c.loss, c.gain)[0, 1].round(3))
@@ -264,7 +264,7 @@ def fig4_ladder(df):
                 for T in (1.3, 1.5, 1.7, 2.0):
                     g = lad[(lad.model == m) & (lad.task == task) & (lad["T"] == T) & (lad.sampler == rule)]
                     xs.append(T); ys.append(g.correct.mean() * 100)
-                ax.plot(xs, ys, "-", color=RULE_COLOR[rule], lw=1.3, marker="o", ms=2.8, mec="white", mew=0.4)
+                ax.plot(xs, ys, "-", color=RULE_COLOR[rule], lw=1.3, marker=RULE_MARK[rule], ms=3.4, mec="white", mew=0.4)
             if ri == 0:
                 ax.set_title(LABEL[m], fontsize=9, pad=3)
             if ci == 0:
@@ -277,7 +277,7 @@ def fig4_ladder(df):
     b = grid[(grid.model == models[2]) & (grid.task == "mmlu_pro") & (grid["T"] == 0.7) & (grid.sampler == "temperature")].correct.mean() * 100
     axes[1, 2].text(0.72, b / 2 - 3, "half of the $T$0.7\naccuracy", ha="left", va="top", fontsize=6.5, color="#777777")
     from matplotlib.lines import Line2D
-    handles = [Line2D([], [], color=RULE_COLOR[r], lw=1.5, marker="o", ms=3, label=RULE_TEX[r]) for r in rules]
+    handles = [Line2D([], [], color=RULE_COLOR[r], lw=1.5, marker=RULE_MARK[r], ms=4, label=RULE_TEX[r]) for r in rules]
     fig.legend(handles=handles, loc="lower center", ncol=4, bbox_to_anchor=(0.5, -0.04), handlelength=1.6, columnspacing=1.6)
     fig.subplots_adjust(hspace=0.15, wspace=0.12)
     save(fig, "fig4_ladder")
