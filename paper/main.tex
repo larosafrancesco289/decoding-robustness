@@ -35,106 +35,149 @@
 \maketitle
 
 \begin{abstract}
-Truncation samplers such as top-$p$, min-$p$, and top-$n\sigma$ are meant to keep sampled
-text coherent at high temperature, and their reported accuracy gains come from temperatures of
-1.5 to 3. We ask when they change accuracy on tasks with a checkable answer. In one controlled
-pipeline we test thirteen open-weight instruction-tuned models on GSM8K and MMLU-Pro at
-temperatures 0.7, 1.0, and 1.3; seven of the models also run under eight decoding
-configurations and four quantization levels. Temperature sensitivity differs by model. Between 0.7 and 1.3,
-six of the thirteen lose 17 to 38 accuracy points on MMLU-Pro under plain temperature sampling
-and the other seven lose at most 10. The loss appears as capped or unparseable
-generations, while the share of parsed wrong answers falls or stays flat. The Llama-3.2 collapse replicates at native
-precision through a second inference engine. Truncation gains track these losses. Where plain
-temperature holds its accuracy, no rule gains more than 3.3 points over 96 comparisons
-(simultaneous 95\% upper bound 9.0). Where it collapses, every rule improves accuracy at 1.3 and the
-best rule finishes within six points of the 0.7 level; on a temperature ladder to 2.0,
-truncation delays or avoids the collapse, and top-$n\sigma$ never collapses in the tested range. At default
-temperatures the consequential choice is the model; the sampler matters once the model has
-begun to fail.
+Large language models generate text by sampling each token from a predicted distribution, and a
+temperature parameter sets how far the draw strays from the most probable tokens. Truncation
+samplers such as top-$p$ and min-$p$ discard the least probable tokens before the draw, so that
+sampling at high temperature stays coherent. Their reported accuracy gains come from temperatures
+of 1.5 to 3, while deployed systems set defaults between 0.6 and 1.0. Whether they change accuracy
+at those defaults, and for which models, has not been measured. We test thirteen open-weight
+models on GSM8K and MMLU-Pro at temperatures 0.7, 1.0, and 1.3 in one controlled pipeline, seven
+of them under eight decoding configurations. Six of the thirteen models lose 17 to 38 accuracy
+points on MMLU-Pro between 0.7 and 1.3, and the other seven lose at most 10. The lost accuracy
+comes from generations that run to the token limit or never state an answer. These results suggest
+that truncation samplers improve accuracy primarily when higher temperatures substantially degrade
+model performance. Where accuracy remains stable across temperatures, none of the tested
+truncation samplers improves on plain temperature sampling.
 \end{abstract}
 
 \section{Introduction}
+\label{sec:intro}
 
-Sampling is the default decoding choice for deployed language models \citep{shi2024decoding}.
-At each step the decoder draws the next token from the model's predicted distribution, and a
-temperature parameter scales the randomness of the draw (greedy decoding, the deterministic
-alternative, always takes the most probable token). A higher temperature moves probability
-toward the tail of the distribution, the tokens with low predicted probability, where the
-model's estimates are least reliable \citep{holtzman2020curious,hewitt2022truncation}.
-Truncation samplers delete that tail before the draw. They were designed for open-ended
-generation \citep{garcesarias2025decoding}, and they are now also evaluated on tasks with one
-checkable answer: min-$p$ reports accuracy gains on GSM8K \citep{nguyen2024minp}, and
-top-$n\sigma$ reports accuracy maintained up to a temperature of 3.0 \citep{tang2024topn}.
+Sampling is the default way deployed language models generate text \citep{shi2024decoding}.
+At each step the model assigns a probability to every token in its vocabulary, and the decoder
+draws one from that distribution. A temperature parameter reshapes the distribution before the
+draw. Low temperatures concentrate probability on the few most likely tokens. High temperatures
+spread it toward the tail of the distribution, the many tokens the model rates as unlikely, where
+its estimates are least reliable \citep{holtzman2020curious,hewitt2022truncation}. Model vendors
+and inference engines set defaults between 0.6 and 1.0,\footnote{\texttt{generation\_config.json}
+of \texttt{meta-llama/Llama-3.1-8B-Instruct} sets 0.6; llama.cpp's \texttt{common/sampling.h}
+sets 0.8; the OpenAI chat-completions and Anthropic messages API references set 1.0. All read
+July 2026.} and every engine implements truncation samplers beside them. Truncation samplers,
+among them top-$p$, min-$p$, and top-$n\sigma$, discard the tail of the distribution before the
+draw, each by its own criterion. They were designed to keep open-ended text coherent at high
+temperature \citep{garcesarias2025decoding}, and they are now also evaluated on tasks with one
+checkable answer, where the claim is accuracy: min-$p$ reports gains on GSM8K
+\citep{nguyen2024minp}, and top-$n\sigma$ reports accuracy held up to a temperature of 3.0
+\citep{tang2024topn}.
 
-That evidence has two gaps. It comes from very few models, top-$n\sigma$'s from Llama-3-8B
-\citep{tang2024topn} and min-$p$'s from Mistral-7B \citep{nguyen2024minp}, and it comes from
-temperatures of 1.5 to 3, while deployed systems set defaults between 0.6 and 1.0
-(Section~\ref{sec:design}). A reanalysis that gave every sampler the same tuning budget found
-min-$p$'s gains indistinguishable from the other rules' \citep{schaeffer2025minp}. Whether a
-truncation rule changes accuracy at the temperatures systems use, and for which models, has
-not been measured.
+Both results rest on one model and one range of temperatures. Top-$n\sigma$ was evaluated on
+Llama-3-8B \citep{tang2024topn} and min-$p$ on Mistral-7B \citep{nguyen2024minp}, at
+temperatures of 1.5 to 3, above the defaults systems set. A reanalysis that searched the same
+number of hyperparameter settings for every rule found the gains of min-$p$ indistinguishable
+from those of the other rules \citep{schaeffer2025minp}. The question cannot be settled by
+comparing across papers, because benchmark scores move with the inference backend even under
+greedy decoding \citep{masoudian2026backend}, and with the prompt, the parser, and the item set.
+Settling it requires one pipeline in which everything except the decoding configuration is held
+fixed. It also requires enough models to show whether the answer depends on the model.
 
-In one pipeline with fixed items, prompts, token budgets, and parser, we run
-thirteen open-weight instruction-tuned models from the Llama-3, Mistral, Qwen, Gemma, and OLMo
-lineages on GSM8K and MMLU-Pro at temperatures 0.7, 1.0, and 1.3. Seven models form a full grid
-of eight decoding configurations and four quantization levels. Six more models run the
-temperature test alone; three of them trip a prespecified fragility flag and receive the full
-sampler grid. Every estimate carries an item-clustered bootstrap interval.
+\begin{quote}
+\textbf{Research question:} Under what model and temperature conditions do truncation samplers
+improve accuracy over plain temperature sampling?
+\end{quote}
 
-Three findings follow. First, temperature sensitivity differs across model checkpoints under
-identical conditions: six of the thirteen lose 17 to 38 points on MMLU-Pro between 0.7
-and 1.3 under plain temperature sampling, and the other seven lose at most 10. The
-collapse of Llama-3.2-3B replicates at native precision through a second engine, and
-Hermes-3, a different post-training of the Llama-3.1-8B base, shows roughly half of
-Llama-3.1's drop. Second, on MMLU-Pro every fragile checkpoint shows a rise of 26 to 78 points in the
-share of capped or unparseable generations and a falling or flat share of parsed wrong
-answers, and a blinded audit finds the capped Llama outputs at 1.3 to be incoherent text. Third, truncation gains track
-these losses. On the six models that hold their accuracy, no rule gains more than 3.3 points at
-temperatures 0.7 and 1.0 (96 comparisons, simultaneous 95\% upper bound 9.0). On the four
-fragile checkpoints with a sampler grid, every rule improves accuracy at 1.3 and the best rule
-finishes within six points of the 0.7 level, and on a ladder to temperature 2.0 truncation
-delays or avoids the collapse of three models, in the range where the sampler papers measured
-their gains. For a practitioner the order of decisions follows: choose the model and the
-temperature together, because at default temperatures the sampler changes little on a model that
-holds its accuracy and much on a model that has begun to lose it.
+We test thirteen open-weight models from the Llama-3, Mistral, Qwen, Gemma, and OLMo families
+on GSM8K and MMLU-Pro at temperatures 0.7, 1.0, and 1.3, in one pipeline with fixed items,
+prompts, token budgets, and parser. Ten of the models also run under eight decoding
+configurations: greedy decoding, plain temperature sampling, and six truncation configurations.
+Section~\ref{sec:design} gives the design. Two questions follow. The first is whether a model
+keeps its accuracy between 0.7 and 1.3 under plain sampling, and what the lost accuracy looks
+like when it does not. The second is whether any truncation rule improves on plain temperature
+sampling between 0.7 and 1.3.
 
-\section{Background}
+We find that temperature sensitivity differs by model. Between 0.7 and 1.3, six of the thirteen
+models lose 17 to 38 accuracy points on MMLU-Pro under plain sampling, and the other seven lose
+at most 10. The loss takes the form of a collapse of the output. On the six fragile models, the
+share of generations that run to the token limit or never state an answer rises by 26 to 78
+points, while the share of generations that state a wrong answer does not rise. The collapse is
+a property of the model. Hermes-3, a different post-training of the same base model as
+Llama-3.1-8B, loses half as much accuracy as Llama-3.1-8B does. Truncation gains follow the
+collapse. On the models that hold their accuracy, no truncation sampler improves on plain
+temperature sampling at 0.7 or 1.0. On the models that collapse, every truncation sampler
+improves accuracy at 1.3, and at temperatures up to 2.0 truncation delays or prevents the
+collapse. The gains reported for truncation samplers are therefore real, and they are recoveries
+from a collapse that only some models suffer and that begins above the temperatures systems
+use. This work makes three contributions:
+
+\begin{itemize}
+\item \textbf{A controlled comparison of truncation samplers at the temperatures systems use.}
+Across thirteen open-weight models on GSM8K and MMLU-Pro, no truncation sampler improves on
+plain temperature sampling at 0.7 or 1.0, and an upper bound states how large a gain the
+results leave possible.
+\item \textbf{Temperature fragility as a property of the model.} Six of the thirteen models
+collapse between 1.0 and 1.3 into generations that run to the token limit or never state an
+answer. The collapse replicates across inference engine and precision. A different
+post-training of the same base model halves it. A plain temperature test identifies the
+fragile models before any sampler is compared.
+\item \textbf{The condition under which truncation samplers help.} On the collapsing models,
+every truncation sampler improves accuracy at 1.3 and delays the collapse at temperatures up
+to 2.0. This locates the gains reported for truncation samplers above the temperatures systems
+use, which reconciles those reports with the absence of gains below.
+\end{itemize}
+
+\section{Related work}
 \label{sec:background}
 
-\textbf{Truncation rules.} Top-$k$ keeps the $k$ most probable tokens \citep{fan2018hierarchical}.
-Nucleus sampling, or top-$p$, keeps the smallest set whose probabilities sum to $p$, so the set
-grows when the distribution is flat \citep{holtzman2020curious}. Min-$p$ keeps every token whose
-probability is at least a fixed fraction of the most probable token's \citep{nguyen2024minp}.
-Top-$n\sigma$ works on logits (the model's scores before they are converted to probabilities)
-and keeps tokens within $n$ standard deviations of the top logit; temperature rescales all logits
-equally, so the retained set does not change with temperature \citep{tang2024topn}. For the probability-space rules the order of the two operations matters. The rule's threshold
-is computed on the distribution it receives, so a rule applied after temperature scaling cuts
-the scaled distribution and keeps a different set of tokens from the same rule applied before
-it. We run both orders. Two 2026 rules set the
-threshold adaptively so that it is invariant to temperature by construction
-\citep{tan2026pless,ding2026mink}; the evaluation of Min-$k$ starts at temperature 1.0, where its
-GSM8K results put top-$k$, top-$p$, and min-$p$ within a point of each other, and the rules
-separate only above temperature 2 \citep{ding2026mink}. \citet{welleck2020consistency} proved
-that top-$k$ and nucleus decoding can produce sequences that never terminate, so
-non-termination is a documented decoding failure.
+\textbf{Truncation samplers.} A truncation sampler removes the least probable tokens from the
+distribution before each token is sampled. Top-$k$ keeps the $k$ most probable tokens
+\citep{fan2018hierarchical}. Top-$p$, or nucleus sampling, keeps the smallest set of tokens
+whose probabilities sum to $p$, so the set grows when the distribution is flat
+\citep{holtzman2020curious}. Min-$p$ keeps every token whose probability is at least a fixed
+fraction of the largest \citep{nguyen2024minp}. Top-$n\sigma$ works on the logits, the model's
+scores before they are converted to probabilities, and keeps the tokens within $n$ standard
+deviations of the largest logit \citep{tang2024topn}. Temperature rescales all logits equally,
+so top-$n\sigma$ keeps the same tokens at every temperature, and so does top-$k$, because
+scaling does not change the order of the tokens. Top-$p$ and min-$p$ decide from the
+probabilities themselves, which temperature changes, so for them the order of scaling and
+truncation matters. A sampler applied after temperature scaling sees the scaled distribution
+and keeps a different set of tokens from the same sampler applied before it. Our main
+configurations apply temperature first, and for top-$p$ and min-$p$ we also run the reverse
+order, which is the default in llama.cpp.
 
-\textbf{Prior evaluations.} Sampler papers compare rules against each other. Decoding surveys
-report that the best method changes with the task and the model \citep{shi2024decoding}, that
-the optimal configuration for open-ended generation varies by model \citep{garcesarias2025decoding},
-and that the gap between greedy decoding and sampling on reasoning benchmarks differs by model
-\citep{song2024goodbad}. Temperature studies stop at 1.0 or use tasks with little accuracy to
-lose: \citet{renze2024temperature} find no effect between 0.0 and 1.0 on multiple-choice
-problems, and \citet{grover2026reliability} conclude that instruction tuning is the main
-determinant of robustness, on synthetic tasks where the robust models score 11 to 30\% and with
-no truncation rule tested. \citet{fastowski2025confidence} link token-distribution entropy to
-temperature sensitivity on factual questions, and \citet{troshin2025temperature} attribute
-high-temperature losses on mathematics to wrong tokens at a few critical positions. Two
-recent studies motivate our design choices: benchmark scores depend on the inference backend
-even under greedy decoding \citep{masoudian2026backend}, so we use one engine and disclose it,
-and quantization and temperature do not compound in a factorial study of eight models
-\citep{prasad2026quantization}, which we check on our own grid (Appendix~\ref{app:temp}).
-None of these studies measures, on one panel of models, whether accuracy is lost at the
-temperatures systems use and whether a truncation rule changes that.
+\textbf{Temperature-invariant samplers.} The parameter of top-$p$ or min-$p$ fixes how much of
+the distribution is kept, and temperature reshapes the distribution. The same value therefore
+keeps a different set of tokens at each temperature, and a value that works well at one
+temperature need not work well at another. Two samplers published in 2026 begin from this
+observation. $p$-less sampling \citep{tan2026pless} and Min-$k$ \citep{ding2026mink} each
+decide which tokens to keep from the shape of the distribution at every step, so that
+temperature does not change which tokens are kept. Neither paper measures whether that matters
+at the temperatures systems use. The evaluation of Min-$k$ begins at temperature 1.0, where
+top-$k$, top-$p$, and min-$p$ score within a point of one another on GSM8K, and the samplers
+separate only above temperature 2 \citep{ding2026mink}.
+
+\textbf{Evaluations of decoding and temperature.} Studies that compare decoding methods find
+that the best one depends on the model. A survey of decoding methods reports that the best
+method changes with the task and the model \citep{shi2024decoding}. The best configuration for
+open-ended generation varies by model \citep{garcesarias2025decoding}, and so does the gap
+between greedy decoding and sampling on reasoning benchmarks \citep{song2024goodbad}. Studies
+of temperature either stop at 1.0 or use tasks with little accuracy to lose.
+\citet{renze2024temperature} find no effect of temperature between 0.0 and 1.0 on
+multiple-choice problems. \citet{grover2026reliability} concludes that instruction tuning is
+the main determinant of robustness to temperature, on synthetic tasks where the most robust
+models score 11 to 30\% and with no truncation sampler tested. \citet{fastowski2025confidence}
+link the entropy of the token distribution to temperature sensitivity on factual questions,
+and \citet{troshin2025temperature} attribute high-temperature losses on mathematics to wrong
+tokens at a few critical positions.
+
+\textbf{Conditions of measurement.} One recent study shapes the design of our comparison.
+\citet{masoudian2026backend} run three instruction-tuned models through five inference
+frameworks on six benchmarks and find that the framework changes the scores even under greedy
+decoding, by amounts that depend on the model. A comparison across models and samplers must
+therefore hold the framework fixed, or the differences it reports may belong to the framework.
+We run every configuration through one engine, llama.cpp. To check whether the collapse we
+observe comes from the engine, we rerun the most fragile model through a second engine at full
+precision. Our models also run quantized. \citet{prasad2026quantization} find that quantization
+does not change how much a model loses to temperature, and our grid at four quantization
+levels agrees (Appendix~\ref{app:temp}).
 
 \section{Experimental design}
 \label{sec:design}
@@ -160,10 +203,7 @@ four truncation rules of Section~\ref{sec:background} at the setting each source
 \citep{nguyen2024minp}, top-$n\sigma$ 1.0 \citep{tang2024topn}), with temperature scaling applied
 before truncation, plus two ablations that apply top-$p$ and min-$p$ before temperature scaling
 (the llama.cpp default order). Temperatures
-0.7 and 1.0 bracket the defaults that models and engines set (Llama-3.1's generation
-configuration sets 0.6, llama.cpp 0.8, the OpenAI and Anthropic APIs 1.0),\footnote{\texttt{generation\_config.json} of
-\texttt{meta-llama/Llama-3.1-8B-Instruct}; llama.cpp's \texttt{common/sampling.h}; the OpenAI
-chat-completions and Anthropic messages API references, read July 2026.} and 1.3 is a stress point above them. Each request carries exactly one
+0.7 and 1.0 bracket the defaults that models and engines set (Section~\ref{sec:intro}), and 1.3 is a stress point above them. Each request carries exactly one
 truncation parameter, and the engine applies only that rule (Appendix~\ref{app:repro}).
 
 \textbf{Tasks and grading.} GSM8K, grade-school word problems \citep{cobbe2021gsm8k}, with the
