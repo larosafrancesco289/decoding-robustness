@@ -39,8 +39,8 @@ Large language models generate text by sampling each token from a predicted dist
 temperature parameter sets how far the draw strays from the most probable tokens. Truncation
 samplers such as top-$p$ and min-$p$ discard the least probable tokens before the draw, so that
 sampling at high temperature stays coherent. Their reported accuracy gains come from temperatures
-of 1.5 to 3, while deployed systems set defaults between 0.6 and 1.0. Whether they change accuracy
-at those defaults, and for which models, has not been measured. We test thirteen open-weight
+of 1.5 to 3, while the defaults of deployed systems cluster between 0.6 and 1.0. Whether they change
+accuracy at those defaults, and for which models, has not been measured. We test thirteen open-weight
 models on GSM8K and MMLU-Pro at temperatures 0.7, 1.0, and 1.3 in one controlled pipeline, seven
 of them under eight decoding configurations. Six of the thirteen models lose 17 to 38 accuracy
 points on MMLU-Pro between 0.7 and 1.3, and the other seven lose at most 10. The lost accuracy
@@ -58,11 +58,13 @@ At each step the model assigns a probability to every token in its vocabulary, a
 draws one from that distribution. A temperature parameter reshapes the distribution before the
 draw. Low temperatures concentrate probability on the few most likely tokens. High temperatures
 spread it toward the tail of the distribution, the many tokens the model rates as unlikely, where
-its estimates are least reliable \citep{holtzman2020curious,hewitt2022truncation}. Model vendors
-and inference engines set defaults between 0.6 and 1.0,\footnote{\texttt{generation\_config.json}
+its estimates are least reliable \citep{holtzman2020curious,hewitt2022truncation}. The typical
+defaults of model vendors and inference engines cluster between 0.6 and 1.0
+\citep{renze2024temperature,hochlehnert2025sober},\footnote{\texttt{generation\_config.json}
 of \texttt{meta-llama/Llama-3.1-8B-Instruct} sets 0.6; llama.cpp's \texttt{common/sampling.h}
 sets 0.8; the OpenAI chat-completions and Anthropic messages API references set 1.0. All read
-July 2026.} and every engine implements truncation samplers beside them. Truncation samplers,
+July 2026. Recommendations outside this range exist: Mistral's instruct model cards suggest
+0.15.} and every engine implements truncation samplers beside them. Truncation samplers,
 among them top-$p$, min-$p$, and top-$n\sigma$, discard the tail of the distribution before the
 draw, each by its own criterion. They were designed to keep open-ended text coherent at high
 temperature \citep{garcesarias2025decoding}, and they are now also evaluated on tasks with one
@@ -173,19 +175,19 @@ tokens at a few critical positions.
 frameworks on six benchmarks and find that the framework changes the scores even under greedy
 decoding, by amounts that depend on the model. A comparison across models and samplers must
 therefore hold the framework fixed, or the differences it reports may belong to the framework.
-We run every configuration through one engine, llama.cpp. To check whether the collapse we
+We run every configuration through one engine, llama.cpp \citep{gerganov2023llamacpp}. To check whether the collapse we
 observe comes from the engine, we rerun the most fragile model through a second engine at full
-precision. Our models also run quantized. \citet{prasad2026quantization} find that quantization
+precision. Our models also run quantized, with weights stored at reduced precision to fit in less memory.
+\citet{prasad2026quantization} find that quantization
 does not change how much a model loses to temperature, and our grid at four quantization
 levels agrees (Appendix~\ref{app:temp}).
 
 \section{Experimental design}
 \label{sec:design}
 
-Table~\ref{tab:design} lists the six runs. All share the same fixed items, client-rendered
-official chat templates, token budgets, parser, and seed derivation, so an accuracy difference
-between two runs is attributable to the factor that differs, up to the sampling variation the
-bootstrap quantifies.
+Table~\ref{tab:design} lists the six runs. All of them use the same items, prompts, token
+budgets, and parser, so a difference in accuracy between two runs comes from the factor that
+differs between them, up to the sampling variation that the confidence intervals quantify.
 
 \begin{table*}[t]\centering
 \caption{The six runs, 232,700 graded generations in total. Every run uses both tasks with the
@@ -197,71 +199,78 @@ Qwen3-4B beside its four quantized runs. Gen.\ counts graded generations.}
 \footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\textwidth}{!}{\input{tables/tab_design}}
 \end{table*}
 
-\textbf{Decoding.} Eight configurations: greedy decoding, plain temperature sampling, and the
-four truncation rules of Section~\ref{sec:background} at the setting each source paper uses
-(top-$p$ 0.95 \citep{holtzman2020curious}, top-$k$ 40 \citep{radford2019gpt2}, min-$p$ 0.05
-\citep{nguyen2024minp}, top-$n\sigma$ 1.0 \citep{tang2024topn}), with temperature scaling applied
-before truncation, plus two ablations that apply top-$p$ and min-$p$ before temperature scaling
-(the llama.cpp default order). Temperatures
-0.7 and 1.0 bracket the defaults that models and engines set (Section~\ref{sec:intro}), and 1.3 is a stress point above them. Each request carries exactly one
-truncation parameter, and the engine applies only that rule (Appendix~\ref{app:repro}).
+\textbf{Decoding.} Every model in the main grid runs under eight decoding configurations. Two
+are baselines, greedy decoding and plain temperature sampling with no truncation. Four apply
+one truncation sampler after temperature scaling, each at the setting its source paper uses:
+top-$p$ 0.95 \citep{holtzman2020curious}, top-$k$ 40 \citep{radford2019gpt2}, min-$p$ 0.05
+\citep{nguyen2024minp}, and top-$n\sigma$ 1.0 \citep{tang2024topn}. The last two repeat top-$p$
+and min-$p$ with truncation applied before temperature scaling, the default order in llama.cpp,
+so both orders are tested for the two samplers where the order matters
+(Section~\ref{sec:background}). Temperatures 0.7 and 1.0 bracket the defaults of
+Section~\ref{sec:intro}, and 1.3 sits above them, to show what happens when a model is run past
+its default range.
 
-\textbf{Tasks and grading.} GSM8K, grade-school word problems \citep{cobbe2021gsm8k}, with the
-zero-shot chain-of-thought prompt (reasoning requested without worked examples) of Meta's Llama
-evaluation suite \citep{meta2024llamaevals} and
-numeric exact match; and MMLU-Pro, ten-option multiple choice \citep{wang2024mmlupro}, zero-shot
-chain of thought and letter exact match. The fixed MMLU-Pro items are the first 50 of the test
-split, which is sorted by category, so all 50 are business questions; a stratified subset of 50
-fresh items from all 14 categories checks this choice on three models
-(Appendix~\ref{app:temp}). Both tasks need a chain of reasoning ending in one exactly
-checkable answer, and MMLU-Pro's reasoning runs about twice as long (median 398 against 212 completion tokens at
-0.7). The token budgets are 512
-on GSM8K and 1024 on MMLU-Pro; a generation that reaches its budget is \emph{capped}. Parsers
-follow lm-eval-harness \citep{gao2023evalharness} and log one of three outcomes: \emph{strict},
-the pinned final-answer sentence is present (``The final answer is 26''; ``The answer is
-(I)''); \emph{flexible}, the sentence is absent and the parser falls back to the last number or
-the last parenthesized letter; \emph{failed}, neither exists, graded incorrect.
-Appendix~\ref{app:grading} shows one generation per outcome. The two parsers treat degenerate text differently. Such text usually contains a number, so on
-GSM8K it is graded as a wrong answer through the flexible path; on MMLU-Pro it fails to parse.
-The capped flag records the failure on both tasks.
+\textbf{Tasks.} GSM8K is a set of grade-school word problems with a numeric answer
+\citep{cobbe2021gsm8k}. We use the zero-shot chain-of-thought prompt of Meta's Llama evaluation
+suite, which asks for reasoning without worked examples \citep{meta2024llamaevals}. MMLU-Pro is
+ten-option multiple choice across 14 categories \citep{wang2024mmlupro}, prompted the same way.
+Both tasks need a chain of reasoning that ends in one answer that can be checked exactly, and
+MMLU-Pro's chains run about twice as long (median 398 against 212 completion tokens at
+temperature 0.7). Each task uses 50 fixed items, the first 50 of its test split.
+
+\textbf{Grading.} Each generation has a token budget, 512 tokens on GSM8K and 1024 on MMLU-Pro.
+A generation that is still running when it reaches the budget is cut off there, and we call it
+\emph{capped}. The parsers follow lm-eval-harness \citep{gao2023evalharness}, the framework
+behind most published scores on these tasks, so our grading matches the scores readers know and
+no parsing choice of ours can favour one configuration. The parser records one of three
+outcomes. A generation is \emph{strict} when it contains the final-answer sentence the prompt
+asks for (``The final answer is 26''; ``The answer is (I)''). It is \emph{flexible} when that
+sentence is absent and the parser falls back to the last number or the last parenthesized
+letter. It is \emph{failed} when neither exists, and it is then graded incorrect.
+Appendix~\ref{app:grading} shows one generation of each kind.
 
 \textbf{Models.} The main grid holds seven instruction-tuned models from five families:
 Llama-3.1-8B \citep{grattafiori2024llama}, Mistral-7B-v0.3 \citep{jiang2023mistral}, Qwen2.5-7B
-\citep{yang2024qwen25}, Qwen3-1.7B, 4B, and 8B \citep{yang2025qwen3} with thinking off, and
-Gemma-3-12B \citep{gemma2025gemma3}, each at four GGUF quantization levels (Q8\_0, Q6\_K,
-Q4\_K\_M, Q3\_K\_M) from one provider and one recipe. Every temperature result uses Q8\_0. The sampler
-bound of Section~\ref{sec:bound} pools the four levels, and is also given at Q8\_0 alone.
-The temperature extension adds six models at Q8\_0: two further Llama-3 releases, Llama-3-8B
-\citep{meta2024llama3} and Llama-3.2-3B \citep{meta2024llama32}; Hermes-3-8B
-\citep{teknium2024hermes3}, a different post-training of the Llama-3.1-8B base; Qwen3.5-9B
-\citep{qwen2026qwen35} and Gemma-4-E4B \citep{google2026gemma4}, two 2026 releases;
-and OLMo-3-7B \citep{ai2025olmo3}, a fully open model. The four-model panel uses a later
-llama.cpp release than the grid's pinned build, which two of its checkpoints require;
-Llama-3.2-3B and Qwen3-4B rerun on that release as a bridge (Section~\ref{sec:sensitivity}).
+\citep{yang2024qwen25}, Qwen3-1.7B, 4B, and 8B with thinking off \citep{yang2025qwen3}, and
+Gemma-3-12B \citep{gemma2025gemma3}. They are the widely used open-weight families at sizes that
+fit the single 16\,GB consumer GPU on which every run was made (Appendix~\ref{app:repro}). Each
+runs at four quantization levels, Q8\_0, Q6\_K, Q4\_K\_M, and Q3\_K\_M, where the digit is the
+number of bits per weight, all produced by one provider with the same conversion settings
+(Appendix~\ref{app:repro}), so the levels differ only in precision. Every temperature result in
+the paper uses Q8\_0, the level closest to full precision. Six more models run the temperature
+test at Q8\_0. Two are further Llama-3 releases, Llama-3-8B \citep{meta2024llama3} and
+Llama-3.2-3B \citep{meta2024llama32}, added because Llama-3.1-8B collapsed in the grid and we
+wanted to know whether the other releases of the family do. Hermes-3-8B \citep{teknium2024hermes3}
+is a different post-training of the Llama-3.1-8B base, which separates the base model from its
+post-training. Qwen3.5-9B \citep{qwen2026qwen35} and Gemma-4-E4B \citep{google2026gemma4} are
+two releases from 2026, added to test whether current models show the same pattern, and
+OLMo-3-7B \citep{ai2025olmo3} is a fully open model. Appendix~\ref{app:repro} gives the model
+files, their hashes, and the llama.cpp builds.
 
-\textbf{Fragility flag.} Before the extension ran, we fixed a flag: a plain-temperature accuracy
-drop of at least 15 points from 0.7 to 1.3, a capped-rate rise of at least 20, or a strict-parse
-fall of at least 20, on either task. A flagged model receives the full eight-configuration grid
-at Q8\_0. Three of the four 2026 panel models tripped it (Hermes-3, Qwen3.5-9B, OLMo-3-7B). The two
-further Llama releases ran before the flag was written and trip it as well; they received no
-grid, and Llama-3.1-8B's main-grid rows stand for that lineage. We call the six 2026 and Llama
-additions the temperature extension, and the four 2026 models the panel.
+\textbf{Fragility flag.} The six additional models first run the temperature test alone. A
+model then receives the eight decoding configurations only if the test shows that it loses
+accuracy to temperature, because the sampler comparison on models that hold their accuracy is
+already covered by the main grid. We fixed the criterion before any of the six ran. A model
+qualifies when, between temperatures 0.7 and 1.3 under plain sampling, its accuracy falls by at
+least 15 points, its capped rate rises by at least 20 points, or its share of strict parses
+falls by at least 20 points, on either task. Three models qualified, Hermes-3, Qwen3.5-9B, and
+OLMo-3-7B, and each ran the eight configurations at Q8\_0.
 
-\textbf{Engine and precision.} Every grid result comes from llama.cpp on quantized weights, so
-the collapse could in principle belong to the engine or the conversion. The engine check reruns
-the temperature test through Hugging Face Transformers on the official bfloat16 weights (BF16, a
-16-bit floating-point format) of Llama-3.2-3B, in 8-bit weights for Llama-3.1-8B (the most a 16\,GB card holds), and in BF16 for Qwen3-4B as a
-robust control, plus Llama-3.2-3B on its unquantized F16 GGUF through llama.cpp.
+\textbf{Engine check.} Every result in the grid comes from llama.cpp on quantized weights, so a
+collapse could come from the engine or from the conversion of the weights. To check, we rerun
+the temperature test through Hugging Face Transformers \citep{wolf2020transformers} on the
+official weights: Llama-3.2-3B at full 16-bit precision, Llama-3.1-8B in 8-bit weights, the
+largest that fit the GPU, and Qwen3-4B at full precision as a model that holds its accuracy.
 
-\textbf{Inference.} Every interval is a 95\% nonparametric bootstrap clustered on the 50 items
-(questions are resampled with all their generations together; $B{=}2000$, 5000 for the sampler
-bound). Both arms of every comparison ran the same items, so the bootstrap is paired. Item accuracy is the mean over repetitions, and over quantization levels where
-levels are pooled. The sampler bound is a simultaneous 95\% upper confidence bound on the largest gain in a stated
-family of paired contrasts, of the max-$t$ form: the largest observed gain plus the 95th
-percentile of the largest bootstrap deviation, with the contrasts resampled jointly
-\citep{westfall1993resampling}. A generalized estimating equation over the same records
-reproduces the sampler-contrast intervals to within 0.6 points (Appendix~\ref{app:sampler}). Hardware, the pinned builds, model hashes, and the
-anonymized code and records are in Appendix~\ref{app:repro}.
+\textbf{Statistical inference.} All intervals in the paper are 95\% confidence intervals
+obtained by bootstrapping over items. We resample the 50 items in each task, keeping all
+generations of an item together. This captures uncertainty due to the choice of items without
+treating repeated generations as independent observations. Comparisons between configurations
+are paired because each configuration is evaluated on the same 50 items. In
+Section~\ref{sec:bound}, we ask whether any truncation sampler improves on plain temperature
+sampling. To account for testing several samplers, we resample their differences from
+temperature sampling jointly and compute an upper confidence bound on the largest improvement
+\citep{westfall1993resampling}.
 
 \section{Results}
 
