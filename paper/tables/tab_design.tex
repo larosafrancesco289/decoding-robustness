@@ -1,12 +1,12 @@
-\begin{tabular}{@{}lllllrl@{}}
+\begin{tabular}{@{}llllrr@{}}
 \toprule
-Run & Models & Precision, engine & Configurations & $T$ & Gen. & Where \\
+Run & Models & Precision and engine & Configurations & $T$ & Generations \\
 \midrule
-Main grid & 7 (5 families) & Q8, Q6, Q4, Q3; llama.cpp & 8 & 0.7, 1.0, 1.3 & 185,600 & \S\ref{sec:sensitivity}--\ref{sec:recovery} \\
-Temperature extension & 6 more & Q8; llama.cpp & greedy, plain temp. & 0.7, 1.0, 1.3 & 6,000 & \S\ref{sec:sensitivity}, \ref{sec:degeneration} \\
-Flagged-model grid & 3 of the 6 & Q8; llama.cpp & 8 & 0.7, 1.0, 1.3 & 19,200 & \S\ref{sec:bound}, \ref{sec:recovery} \\
-Engine and release checks & Llama-3.2, Llama-3.1, Qwen3-4B & BF16, INT8; transformers. F16, Q8; llama.cpp & greedy, plain temp. & 0.7, 1.0, 1.3 & 6,000 & \S\ref{sec:sensitivity}, App.~\ref{app:repro} \\
-Temperature ladder & Llama-3.1, Qwen2.5, Gemma-3 & Q8; llama.cpp & 4 & 1.3, 1.5, 1.7, 2.0 & 14,400 & \S\ref{sec:recovery} \\
-Stratified subset & Llama-3.1, Qwen2.5, Gemma-3 & Q8; llama.cpp & greedy, plain temp. & 0.7, 1.0, 1.3 & 1,500 & App.~\ref{app:temp} \\
+Main grid & 7, from 5 families & Q8, Q6, Q4, Q3; llama.cpp & 8 & 0.7, 1.0, 1.3 & 185,600 \\
+Temperature test & 6 more & Q8; llama.cpp & greedy, plain temp. & 0.7, 1.0, 1.3 & 6,000 \\
+Flagged-model grid & 3 of the 6 & Q8; llama.cpp & 8 & 0.7, 1.0, 1.3 & 19,200 \\
+Engine check & Llama-3.2, Llama-3.1, Qwen3-4B & BF16, INT8 (Transformers); F16, Q8 (llama.cpp) & greedy, plain temp. & 0.7, 1.0, 1.3 & 6,000 \\
+Temperature sweep & Llama-3.1, Qwen2.5, Gemma-3 & Q8; llama.cpp & 4 & 1.3, 1.5, 1.7, 2.0 & 14,400 \\
+Stratified subset & Llama-3.1, Qwen2.5, Gemma-3 & Q8; llama.cpp & greedy, plain temp. & 0.7, 1.0, 1.3 & 1,500 \\
 \bottomrule
 \end{tabular}

@@ -191,10 +191,10 @@ differs between them, up to the sampling variation that the confidence intervals
 
 \begin{table*}[t]\centering
 \caption{The six runs, 232,700 graded generations in total. Every run uses both tasks with the
-same fixed 50 items each and $K{=}3$ repetitions of every sampled configuration ($K{=}1$ for
-greedy decoding), except the stratified subset, which uses 50 fresh MMLU-Pro items. ``8'' configurations are the eight of
-the Decoding paragraph; $K$ is the number of repetitions per item. The main grid includes a BF16 GGUF run of
-Qwen3-4B beside its four quantized runs. Gen.\ counts graded generations.}
+same 50 fixed items each and three repetitions of every sampled configuration (one for greedy
+decoding), except the stratified subset, which uses 50 fresh MMLU-Pro items. ``8''
+configurations are the eight described under Decoding. The main grid also includes a
+16-bit GGUF run of Qwen3-4B beside its four quantized runs.}
 \label{tab:design}
 \footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\textwidth}{!}{\input{tables/tab_design}}
 \end{table*}
@@ -233,7 +233,7 @@ Appendix~\ref{app:grading} shows one generation of each kind.
 Llama-3.1-8B \citep{grattafiori2024llama}, Mistral-7B-v0.3 \citep{jiang2023mistral}, Qwen2.5-7B
 \citep{yang2024qwen25}, Qwen3-1.7B, 4B, and 8B with thinking off \citep{yang2025qwen3}, and
 Gemma-3-12B \citep{gemma2025gemma3}. They are the widely used open-weight families at sizes that
-fit the single 16\,GB consumer GPU on which every run was made (Appendix~\ref{app:repro}). Each
+fit a single consumer GPU with at most 16\,GB of memory (Appendix~\ref{app:repro}). Each
 runs at four quantization levels, Q8\_0, Q6\_K, Q4\_K\_M, and Q3\_K\_M, where the digit is the
 number of bits per weight, all produced by one provider with the same conversion settings
 (Appendix~\ref{app:repro}), so the levels differ only in precision. Every temperature result in
@@ -260,7 +260,7 @@ OLMo-3-7B, and each ran the eight configurations at Q8\_0.
 collapse could come from the engine or from the conversion of the weights. To check, we rerun
 the temperature test through Hugging Face Transformers \citep{wolf2020transformers} on the
 official weights: Llama-3.2-3B at full 16-bit precision, Llama-3.1-8B in 8-bit weights, the
-largest that fit the GPU, and Qwen3-4B at full precision as a model that holds its accuracy.
+largest that fit the GPU's 16\,GB, and Qwen3-4B at full precision as a model that holds its accuracy.
 
 \textbf{Statistical inference.} All intervals in the paper are 95\% confidence intervals
 obtained by bootstrapping over items. We resample the 50 items in each task, keeping all
@@ -374,18 +374,17 @@ fragile model in the main grid, shows a gain already at 1.0. Its MMLU-Pro accura
 Reversing the order of temperature scaling and truncation changes accuracy by at most 4 points
 on the main-grid models at 0.7 and 1.0 (Appendix~\ref{app:sampler}).
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering
-\caption{Paired gains of the four truncation samplers over plain temperature, by family of
-contrasts: the number of contrasts, the largest point gain, the approximate 95\% upper bound on
-the largest gain (the 95th percentile of the jointly resampled maximum; not computed for the
-families at 1.3, where the gains are the finding), and the number of pointwise intervals above
-zero. The six robust grid models are Mistral-7B, Qwen2.5-7B, Qwen3-1.7B, Qwen3-4B, Qwen3-8B, and
-Gemma-3-12B. Grid rows pool quantization levels; panel rows are Q8\_0.}
+\caption{Paired gains of the four truncation samplers over plain temperature sampling, by
+family of comparisons. For each family: the number of comparisons, the largest gain, the 95\%
+upper confidence bound on the largest gain (the 95th percentile of the jointly resampled
+maximum, not computed at 1.3 where the gains are the finding), and the number of pointwise
+intervals above zero. The six robust models are Mistral-7B, Qwen2.5-7B, Qwen3-1.7B, Qwen3-4B,
+Qwen3-8B, and Gemma-3-12B.}
 \label{tab:bound}
-\footnotesize\setlength{\tabcolsep}{4pt}
-\resizebox{\columnwidth}{!}{\input{tables/tab_bound}}
-\end{table}
+\footnotesize\setlength{\tabcolsep}{4pt}\input{tables/tab_bound}
+\end{table*}
 
 \begin{figure*}[t]
 \centering
@@ -504,56 +503,77 @@ no cause for the differences between models.
 
 \appendix
 
-\section{Reproducibility and engine checks}
+\section{Reproducibility and engine check}
 \label{app:repro}
 
-\textbf{Build and item checks.} Llama-3.2-3B and Qwen3-4B rerun on the later llama.cpp release reproduce their pinned-build
-drops with differences that include zero, and the stratified MMLU-Pro subset preserves Llama's
-much larger drop (Llama-3.1 $+43.3$ [31.3, 55.3]; Qwen2.5 $+6.0$; Gemma-3 $+7.3$).
+\textbf{Builds and hardware.} Every run in the main grid, the temperature test, and the sweep
+went through llama.cpp \citep{gerganov2023llamacpp} on a consumer GPU, an RTX 2080~Ti or an
+RTX 5070~Ti with 16\,GB, with a CUDA build for each architecture. The main grid uses commit
+\texttt{5aba5364} (server build 9456). Qwen3.5-9B and Gemma-4-E4B require a later release, so
+the six additional models, their sampler grids, and a bridge run use release v0.4.0 (commit
+\texttt{5266f24d}). The bridge reruns the temperature test of Llama-3.2-3B and Qwen3-4B on
+v0.4.0. Both reproduce the drops measured on the main-grid build, with differences whose
+intervals include zero (Table~\ref{tab:engine-full}), so results from the two builds are
+compared directly in the paper.
 
-\textbf{Inference stack.} llama.cpp at commit \texttt{5aba5364} (server build 9456), native
-\texttt{/completion} endpoint, CUDA builds per GPU architecture (sm\_75 for an RTX 2080~Ti,
-sm\_120 for an RTX 5070~Ti). Server-side BOS insertion is disabled; the client-rendered chat
-template owns the special tokens, and each record stores the SHA-256 of the rendered prompt.
-The 2026 panel, its sampler grids, and the bridge run use release v0.4.0 (commit
-\texttt{5266f24d}), which two panel models require, with the same client-side rendering and the
-server's template parser off. That release forces its own BOS for Gemma~4, so the Gemma-4 prompt
-is rendered without one; on both builds the server returns some cap-length degenerate streams with a zero token count,
-the pinned build with their text (which the client recovers, and which the audit labelled) and
-v0.4.0 as an HTTP error without text. The runner records those as zero-token capped generations.
-They number 189 of 185,600 records in the main grid, 114 in the Llama-releases run, 158 in the
-panel, 196 in its sampler grids, 64 in the engine check, 73 in the bridge, and 2,549 on the
-ladder; at $T{=}1.3$ under plain temperature they are 13\% of Llama-3.1's capped generations. Every quantized checkpoint is a Bartowski imatrix
-GGUF; SHA-256 hashes of the model files are in the repository (\texttt{DOWNLOADS.md}).
+\textbf{Prompts.} The client renders each model's official chat template and sends the
+resulting text, with the server's own template parser and beginning-of-sequence insertion
+turned off, so the client owns every special token. Each record stores the SHA-256 hash of the
+rendered prompt. Release v0.4.0 inserts its own beginning-of-sequence token for Gemma~4, so the
+Gemma-4 prompt is rendered without one. The Llama template stamps the run date into the system
+header, which is the only difference between the prompt strings of runs made on different
+days; the prompt token counts agree on every item.
 
-\textbf{Decoding and seeding.} Exactly one truncation parameter per request; the chain order is
-pinned through the server's \texttt{samplers} array and recorded in every record. At both builds
-the server instantiates only the samplers named in that array, so its defaults for unlisted
-samplers (top-$k$ 40, top-$p$ 0.95, min-$p$ 0.05) are inert, and no penalty, DRY, XTC, or
-logit-bias parameter is sent. Every generation's seed is derived from (global seed 0, model,
-quantization, sampler, temperature, task, item, repetition). Batched serving ($\le 8$ slots) is
-seed-logged but not bit-exact. Tasks: GSM8K (openai/gsm8k, test split, first 50 items) and
-MMLU-Pro (TIGER-Lab/MMLU-Pro, test split, first 50 items). Each generation is one JSONL record
-with the identity tuple, request parameters, raw output, parse outcome, and token counts; runs
-are resumable by record id. The pipeline, configurations, analysis scripts, and every record are
-at \url{https://anonymous.4open.science/r/decoding-robustness-027C}.
+\textbf{Zero-token records.} On both builds the server occasionally returns a degenerate
+generation of budget length with a token count of zero. The main-grid build returns the text,
+which the client recovers and which the audit of Appendix~\ref{app:grading} labelled;
+v0.4.0 returns an HTTP error without text. The runner records both as capped generations with
+zero tokens. They number 189 of the 185,600 records in the main grid, 114 in the run of the two
+further Llama releases, 158 in the temperature test of the four 2026 models, 196 in their
+sampler grids, 64 in the engine check, 73 in the bridge, and 2,549 in the sweep. At $T{=}1.3$
+under plain temperature sampling they are 13\% of Llama-3.1's capped generations.
 
-\textbf{Engine check.} The transformers configuration loads \texttt{meta-llama/Llama-3.2-3B-Instruct}
-(revision \texttt{0cb88a4f}) in BF16 with transformers 5.16.1 and torch 2.14, samples with
-\texttt{do\_sample} at temperature $T$ with top-$k$ and top-$p$ disabled and no other processor,
-in batches of eight with left padding; greedy decoding is \texttt{do\_sample=False}. Generation
-stops on the model's end-of-sequence set or at the task's budget. The prompt is rendered from
-the same template as the grid; the template stamps the run date into the Llama system header,
-the only difference between the runs' prompt strings, and the prompt token counts agree on every
-item. Llama-3.1-8B loads the \texttt{unsloth/Llama-3.1-8B-Instruct} mirror of the official
-weights (revision \texttt{4699cc75}) in 8-bit through bitsandbytes, in batches of four; Qwen3-4B
-loads \texttt{Qwen/Qwen3-4B} (revision \texttt{1cfa9a72}) in BF16 with thinking disabled. Both
-reproduce every grid prompt hash. Table~\ref{tab:engine-full} gives accuracy levels, drops,
-capped rates, and the paired difference of each configuration's drop from the pinned Q8\_0
-llama.cpp cell, including the v0.4.0 bridge rows.
+\textbf{Model files.} Every quantized model is a Bartowski imatrix GGUF from the same provider,
+so the four quantization levels of a model differ only in precision. The SHA-256 hash of every
+model file is listed in the repository (\texttt{DOWNLOADS.md}).
+
+\textbf{Decoding and seeding.} Each request carries exactly one truncation parameter, and the
+order of temperature scaling and truncation is pinned through the server's \texttt{samplers}
+array and recorded in every record. On both builds the server instantiates only the samplers
+named in that array, so its defaults for the samplers not named (top-$k$ 40, top-$p$ 0.95,
+min-$p$ 0.05) have no effect, and no repetition penalty or other logit processor is sent. The
+seed of every generation is derived from the global seed 0 and the model, quantization,
+sampler, temperature, task, item, and repetition. The server serves up to eight requests at
+once, so a run is seed-logged but not bit-exact. The tasks are GSM8K (\texttt{openai/gsm8k},
+test split, first 50 items) and MMLU-Pro (\texttt{TIGER-Lab/MMLU-Pro}, test split, first 50
+items). Each generation is one JSONL record with its identity, request parameters, raw output,
+parse outcome, and token counts, and runs resume by record id. The pipeline, configurations,
+analysis scripts, and every record are at
+\url{https://anonymous.4open.science/r/decoding-robustness-027C}.
+
+\textbf{The two further Llama releases.} Llama-3-8B and Llama-3.2-3B ran the temperature test
+before the fragility criterion of Section~\ref{sec:design} was written. Both meet it. They did
+not run the eight decoding configurations, and Llama-3.1-8B's grid stands for the family in
+Sections~\ref{sec:bound} and \ref{sec:recovery}.
+
+\textbf{Engine check.} The Transformers \citep{wolf2020transformers} configuration loads
+\texttt{meta-llama/Llama-3.2-3B-Instruct} (revision \texttt{0cb88a4f}) in BF16 with
+transformers 5.16.1 and torch 2.14. It samples with \texttt{do\_sample} at temperature $T$,
+with top-$k$ and top-$p$ disabled and no other processor, in batches of eight with left
+padding; greedy decoding is \texttt{do\_sample=False}. Generation stops at the model's
+end-of-sequence tokens or at the task's budget. Llama-3.1-8B loads the
+\texttt{unsloth/Llama-3.1-8B-Instruct} mirror of the official weights (revision
+\texttt{4699cc75}) in 8-bit through bitsandbytes, in batches of four. Qwen3-4B loads
+\texttt{Qwen/Qwen3-4B} (revision \texttt{1cfa9a72}) in BF16 with thinking disabled. All three
+reproduce every grid prompt hash. Llama-3.2-3B also ran through llama.cpp on its unquantized
+16-bit GGUF, which separates the engine from the quantization. Table~\ref{tab:engine-full}
+gives, for every configuration, the accuracy at 0.7 and 1.3, the drop with its interval, the
+capped rate at 1.3, and the paired difference of the drop from the main-grid Q8\_0 cell. The
+intervals on those differences are about 20 points wide, so the check shows that the collapse
+recurs, and Llama-3.1's GSM8K drop is 13 points larger in 8-bit weights than at Q8\_0.
 
 \begin{table*}[t]\centering
-\caption{Engine, precision, and release checks: plain-temperature accuracy at $T{=}0.7$ and
+\caption{Engine, precision, and build checks: plain-temperature accuracy at $T{=}0.7$ and
 $1.3$, the drop with its 95\% item-clustered interval, the capped rate at 1.3 (\%), and the
 difference of the drop from the reference Q8\_0 llama.cpp cell on the same items (positive: a
 larger drop than the reference). The BF16 GGUF row of Qwen3-4B belongs to the main grid.}
@@ -564,30 +584,21 @@ larger drop than the reference). The BF16 GGUF row of Qwen3-4B belongs to the ma
 \section{Grading and degeneration}
 \label{app:grading}
 
-\textbf{Surviving answers at 1.3.} Among the generations that do complete with the pinned final-answer sentence, accuracy at 1.3 is
-subject to selection, because the surviving generations can come from a different mix of items.
-The matched comparison is greedy accuracy on the surviving generations' items, each survivor
-counted once. On MMLU-Pro,
-Llama-3.1's completed answers score 78.9\% against 78.9\% for matched greedy, Qwen3.5's 83.1
-against 84.7, and OLMo-3's 73.3 against 73.3; for Llama-3-8B, Llama-3.2-3B (nine survivors), and
-Hermes-3 the completed answers score below matched greedy, by 4, 11, and 16 points
-(Appendix~\ref{app:grading}). Three fragile checkpoints score 4 to 16 points below matched greedy among their surviving
-answers, in point estimates, and so does robust Mistral-7B (21 points), so a survivor gap at 1.3
-is not specific to fragility (Table~\ref{tab:survivor} gives the 0.7 reference for every
-model).
-
-Figure~\ref{fig:parsepaths} shows one generation per parse outcome and Figure~\ref{fig:degenexamples}
-two degenerate outputs. The strict rule matches the pinned sentence with the answer directly
-after it. The flexible rule catches two different things: a well-formed answer written outside
-the pinned sentence, and an incoherent generation that still contains a number, which GSM8K
-grades as a wrong answer. Mistral omits the pinned sentence on 26 to 32\% of its GSM8K
-generations at every temperature, and the Qwen3 models wrap the answer in markdown emphasis,
-which the strict rule does not match; both grade correctly through the flexible rule. Because
-markdown defeats the strict rule, we re-graded every main-grid record with a strict rule that
-tolerates it: 598 of 185,600 grades change, 556 of them on Qwen3-8B and Qwen3-4B MMLU-Pro, and no
-plain-temperature drop moves by more than 1.0 point. The original parser, fixed before any run,
-stays primary. Table~\ref{tab:decomp} gives the share of each outcome and the capped rate for
-every model and temperature, and Figure~\ref{fig:outcomes-gsm8k} the GSM8K outcome composition.
+\textbf{Parse outcomes.} Figure~\ref{fig:parsepaths} shows one generation for each of the
+three parse outcomes of Section~\ref{sec:design}, and Figure~\ref{fig:degenexamples} two
+degenerate generations. The strict outcome requires the final-answer sentence with the answer
+directly after it. The flexible outcome, the parser's fallback to the last number or the last
+parenthesized letter, catches two different things: a well-formed answer written outside that
+sentence, and an incoherent generation that still contains a number, which on GSM8K is graded
+as a wrong answer. Mistral-7B omits the sentence on 26 to 32\% of its GSM8K generations at
+every temperature, and the Qwen3 models wrap the answer in markdown emphasis, which the strict
+pattern does not match; both grade correctly through the fallback. To check that markdown does
+not distort the results, we re-graded every main-grid record with a strict pattern that
+tolerates it: 598 of the 185,600 grades change, 556 of them on Qwen3-8B and Qwen3-4B MMLU-Pro,
+and no plain-temperature drop moves by more than 1.0 point. The original parser, fixed before
+any run, stays primary. Table~\ref{tab:decomp} gives the share of each outcome and the capped
+rate for every model and temperature, and Figure~\ref{fig:outcomes-gsm8k} the GSM8K outcomes
+in the form of Figure~\ref{fig:outcomes}.
 
 \begin{figure}[t]
 \centering
@@ -612,7 +623,7 @@ Answer: \quad The answer is \*\*J\*\*.
 \end{minipage}
 \caption{One generation per parse outcome (endings only). Strict: Llama-3.1-8B, GSM8K,
 $T{=}1.3$, graded 26, correct. Flexible: Qwen3-8B, GSM8K, $T{=}0.7$; the emphasis markers defeat
-the strict rule and the last-number fallback grades 230, correct. Failed: Qwen3-8B, MMLU-Pro,
+the strict pattern and the last-number fallback grades 230, correct. Failed: Qwen3-8B, MMLU-Pro,
 $T{=}0.7$; the parser expects a parenthesized letter such as (J), none appears, graded
 incorrect.}
 \label{fig:parsepaths}
@@ -638,9 +649,9 @@ image later campaigns Taylorart parte diesel El N resembled Dental professionals
 \par}
 \vspace{5pt}\hrule
 \end{minipage}
-\caption{Two degenerate outputs (Llama-3.1-8B, Q8\_0, plain temperature, $T{=}1.3$, MMLU-Pro;
-both reached the 1024-token budget). Each opens coherently, loses coherence mid-generation,
-and continues as token noise until the budget.}
+\caption{Two degenerate generations (Llama-3.1-8B, Q8\_0, plain temperature, $T{=}1.3$,
+MMLU-Pro; both reached the 1024-token budget). Each opens coherently, loses coherence
+mid-generation, and continues as token noise until the budget.}
 \label{fig:degenexamples}
 \end{figure}
 
@@ -653,153 +664,181 @@ of the degeneration is graded through the flexible path; the capped flag records
 \label{fig:outcomes-gsm8k}
 \end{figure}
 
-\textbf{Blinded audit.} To check that the parser outcomes mean what Section~\ref{sec:degeneration}
+\textbf{Blinded audit.} To check that the parse outcomes mean what Section~\ref{sec:degeneration}
 takes them to mean, we drew 152 plain-temperature generations at Q8\_0 from Llama-3.1-8B,
-Mistral-7B, Qwen2.5-7B, and Qwen3-8B at $T \in \{0.7, 1.3\}$ on both tasks, stratified by parse
-outcome with the uncertain outcomes oversampled, and had them labelled by a language-model
-annotator (Claude) that saw only the task and the raw output: completed, cut off while coherent,
-degenerate, misformatted, or other. Of the 51 capped outputs, all 8 of Llama's at 1.3 are
-degenerate and all 8 at 0.7 are coherent reasoning cut short; the robust models' 21 capped
-outputs at 1.3 split 8 degenerate, 9 cut off, 3 completed, and 1 misformatted, and their 14 at
-0.7 split 13 cut off and 1 completed. Of the 26 parse failures,
-15 contain a clear answer in an unexpected form, 6 are degenerate, 4 are refusals, and 1 is cut
-off. Of the 75
-strict and flexible parses, 72 are completed answers. The annotator marked 34 of the 152 labels
-as borderline. Sample, labels, and key are in the repository (\texttt{results/outcome\_audit}).
+Mistral-7B, Qwen2.5-7B, and Qwen3-8B at temperatures 0.7 and 1.3 on both tasks, stratified by
+parse outcome with the uncertain outcomes oversampled. Claude Fable 5.1
+\citep{anthropic2026fable} labelled each generation as completed, cut off while coherent,
+degenerate, misformatted, or other, seeing only the task and the raw text. Of the 51 capped
+generations, all 8 of Llama-3.1's at 1.3 are degenerate and all 8 at 0.7 are coherent reasoning
+cut short; the robust models' 21 capped generations at 1.3 split 8 degenerate, 9 cut off, 3
+completed, and 1 misformatted, and their 14 at 0.7 split 13 cut off and 1 completed. Of the 26
+parse failures, 15 contain a clear answer in an unexpected form, 6 are degenerate, 4 are
+refusals, and 1 is cut off. Of the 75 strict and flexible parses, 72 are completed answers. The
+annotator marked 34 of the 152 labels as borderline. The sample, the labels, and the key are in
+the repository (\texttt{results/outcome\_audit}).
 
-\textbf{Survivor comparison.} Table~\ref{tab:survivor} gives, for every model, the share of
-plain-temperature generations with a strict parse at 0.7 and 1.3, the accuracy among them, and
-greedy accuracy on the same surviving items.
+\textbf{Surviving answers at 1.3.} Among the generations that do complete with the
+final-answer sentence at 1.3, accuracy is subject to selection, because the surviving
+generations can come from an easier mix of items. Table~\ref{tab:survivor} therefore gives, for
+every model, the share of plain-temperature generations with a strict parse at 0.7 and 1.3, the
+accuracy among them, and greedy accuracy on the same surviving items, each survivor counted
+once. On MMLU-Pro at 1.3, Llama-3.1's completed answers score 78.9\% against 78.9\% for greedy
+decoding on the same items, Qwen3.5's 83.1 against 84.7, and OLMo-3's 73.3 against 73.3. For
+Llama-3-8B, Llama-3.2-3B (nine survivors), and Hermes-3 the completed answers score below greedy
+decoding by 4, 11, and 16 points, and so do the robust Mistral-7B's by 21 points, so a gap
+among the survivors at 1.3 is not specific to fragility. The comparison controls for the mix of
+items and does not remove the selection.
 
 \begin{table*}[t]\centering
-\caption{Parse outcomes under plain temperature at Q8\_0 (\% of generations, rounded): strict,
-flexible, failed, and capped (capped overlaps the other three).}
+\caption{Parse outcomes under plain temperature sampling at Q8\_0 (\% of generations,
+rounded): strict, flexible, failed, and capped (capped overlaps the other three).}
 \label{tab:decomp}
-\footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\textwidth}{!}{\input{tables/tab_decomp}}
+\scriptsize\renewcommand{\arraystretch}{0.95}\setlength{\tabcolsep}{5pt}\input{tables/tab_decomp}
 \end{table*}
 
 \begin{table*}[t]\centering
-\caption{Accuracy among strict-parsed generations under plain temperature at Q8\_0, with the
-share of generations that parse strictly, the number $n$ of such generations at $T{=}1.3$ (of
-150), and greedy accuracy on their items with each surviving generation counted once.
-Point estimates without intervals.}
+\caption{Accuracy among strict-parsed generations under plain temperature sampling at Q8\_0,
+with the share of generations that parse strictly, the number $n$ of such generations at
+$T{=}1.3$ (of 150), and greedy accuracy on their items with each surviving generation counted
+once. Point estimates without intervals.}
 \label{tab:survivor}
-\footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\textwidth}{!}{\input{tables/tab_survivor}}
+\scriptsize\renewcommand{\arraystretch}{0.95}\setlength{\tabcolsep}{4pt}\input{tables/tab_survivor}
 \end{table*}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.88\columnwidth]{figA_gain_loss}
+\caption{Gain of each truncation sampler over plain temperature sampling against the loss of
+plain temperature sampling relative to greedy decoding: 240 points, four samplers in each of
+the 60 combinations of model, task, and temperature with a sampler grid (Q8\_0). Both axes
+subtract the same plain-temperature accuracy. The diagonal marks full recovery to greedy
+accuracy.}
+\label{fig:gainloss}
+\end{figure}
 
 \section{Temperature results in full}
 \label{app:temp}
 
 Table~\ref{tab:temp-full} gives plain-temperature accuracy at all three temperatures for the
-thirteen models, the drop with its interval, and the change in capped and strict-parse rates.
-Table~\ref{tab:quant-drops} recomputes the drop at each quantization level of the main grid:
-Llama-3.1 collapses at every level and no robust model exceeds 12 points at any level.
-Quantization itself costs little greedy accuracy: from Q8\_0 to Q3\_K\_M, greedy accuracy pooled
-over both tasks changes by at most 5 points on the models of 7B parameters or more and falls by
-7 and 9 points on Qwen3-4B and Qwen3-1.7B.
-Table~\ref{tab:strat} repeats the temperature test on a stratified MMLU-Pro subset with 3 to 4
-items from each of the 14 categories; Llama's drop stays far above the other two, and Gemma-3's
-stratified drop, $+7.3$ [2.0, 12.7], has an interval that excludes zero. A spot-check of Qwen3-8B with thinking on (Q8\_0, $N{=}25$,
-$K{=}2$, 450 generations) reproduces the GSM8K result (94\% at 0.7 against 96\% at 1.3) and not
-the MMLU-Pro one (56 against 46\%, a 10-point drop with interval [2, 20]); with thinking on, the
-longer traces make Qwen3-8B less robust on the longer task.
+thirteen models, the drop from 0.7 to 1.3 with its interval, and the change in the capped and
+strict-parse rates.
+
+\textbf{Quantization.} Table~\ref{tab:quant-drops} recomputes the drop at each quantization
+level of the main grid. Llama-3.1-8B collapses at every level, and no robust model loses more
+than 12 points at any level, which agrees with the finding of \citet{prasad2026quantization}
+that quantization does not change how much a model loses to temperature. Quantization itself
+costs little accuracy. From Q8\_0 to Q3\_K\_M, greedy accuracy pooled over both tasks changes by
+at most 5 points on the models of 7B parameters or more, and falls by 7 and 9 points on Qwen3-4B
+and Qwen3-1.7B.
+
+\textbf{Item selection.} The fixed MMLU-Pro items are the first 50 of the test split, which is
+sorted by category, so all of them are business questions. Table~\ref{tab:strat} repeats the
+temperature test on a second subset of 50 items with 3 to 4 from each of the 14 categories, on
+Llama-3.1-8B, Qwen2.5-7B, and Gemma-3-12B. Llama-3.1's drop stays far above the other two, and
+Gemma-3's stratified drop, $+7.3$ [2.0, 12.7], has an interval that excludes zero.
+
+\textbf{Thinking mode.} A spot check of Qwen3-8B with thinking on (Q8\_0, 25 items, two
+repetitions, 450 generations) reproduces the GSM8K result (94\% at 0.7 against 96\% at 1.3) and
+not the MMLU-Pro one (56 against 46\%, a 10-point drop with interval [2, 20]). With thinking on,
+the longer traces make Qwen3-8B less robust on the longer task.
 
 \begin{table*}[t]\centering
 \caption{Plain-temperature accuracy at Q8\_0 for all thirteen models, the drop from $T{=}0.7$ to
 $1.3$ with its 95\% item-clustered interval (bold: lower limit at or above 15, a stricter
-criterion than the fragility flag), and the change
-in capped and strict-parse rates. Models sorted as in Figure~\ref{fig:drops}.}
+criterion than the fragility flag), and the change in capped and strict-parse rates. Models
+sorted as in Figure~\ref{fig:drops}.}
 \label{tab:temp-full}
 \footnotesize\setlength{\tabcolsep}{4pt}\input{tables/tab_temp_full}
 \end{table*}
 
-\begin{table}[htbp]\centering
-\caption{Plain-temperature accuracy drop $T{=}0.7 \to 1.3$ (pp, point estimates) at each
+\begin{table*}[t]
+\begin{minipage}[t]{0.46\textwidth}\centering
+\caption{Plain-temperature accuracy drop from $T{=}0.7$ to $1.3$ (pp, point estimates) at each
 quantization level of the main grid (150 generations per cell).}
 \label{tab:quant-drops}
-\footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\columnwidth}{!}{\input{tables/tab_quant_drops}}
-\end{table}
-
-\begin{table}[htbp]\centering
+\footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\linewidth}{!}{\input{tables/tab_quant_drops}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.5\textwidth}\centering
 \caption{Stratified MMLU-Pro subset against the fixed business subset: plain-temperature
 accuracy at Q8\_0 and the drop with its interval.}
 \label{tab:strat}
-\footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\columnwidth}{!}{\input{tables/tab_strat}}
-\end{table}
+\footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\linewidth}{!}{\input{tables/tab_strat}}
+\end{minipage}
+\end{table*}
 
-\section{Temperature ladder}
+\section{Temperature sweep}
 \label{app:ladder}
 
-Table~\ref{tab:ladder} gives the plain-temperature drop at each ladder temperature against the
-model's own accuracy at 0.7, with intervals. The ladder is a separate run from the main grid, and its 1.3 step differs from
-Table~\ref{tab:temp-full} by amounts within the intervals (Llama-3.1 on MMLU-Pro: $+44.7$
-against $+38.0$).
+The sweep of Section~\ref{sec:recovery} is a separate run from the main grid.
+Table~\ref{tab:ladder} gives the plain-temperature drop at each sweep temperature against the
+model's own accuracy at 0.7 in the main grid, with intervals. The 1.3 step of the sweep differs
+from the main-grid value of Table~\ref{tab:temp-full} by amounts within the intervals
+(Llama-3.1 on MMLU-Pro: $+44.7$ in the sweep against $+38.0$ in the grid).
 
-\begin{table}[htbp]\centering
-\caption{Plain-temperature accuracy drop at each ladder temperature against the model's own
+\begin{table*}[t]\centering
+\caption{Plain-temperature accuracy drop at each sweep temperature against the model's own
 $T{=}0.7$ accuracy in the main grid (pp, 95\% item-clustered intervals; Q8\_0).}
 \label{tab:ladder}
-\footnotesize\setlength{\tabcolsep}{3pt}\resizebox{\columnwidth}{!}{\input{tables/tab_ladder}}
-\end{table}
+\footnotesize\setlength{\tabcolsep}{6pt}\input{tables/tab_ladder}
+\end{table*}
 
 \section{Sampler results in full}
 \label{app:sampler}
 
-\textbf{Loss and gain across cells.} Across the 60 model, task, and temperature combinations with a sampler grid (seven grid models
-at Q8\_0 and three flagged models), larger losses of plain temperature against greedy decoding accompany
-larger gains of truncation over plain temperature (Pearson $r{=}0.89$ over the 60 best-rule
-points; 0.78 over the 240 rule-level points). The association is descriptive, and the two
-quantities share the plain-temperature baseline (Appendix~\ref{app:sampler}).
+Tables~\ref{tab:grid-gsm8k} and \ref{tab:grid-mmlu} give the accuracy of every decoding
+configuration at every temperature for the ten models with a sampler grid, with the main-grid
+models pooled over their four quantization levels and the three flagged models at Q8\_0.
+Tables~\ref{tab:contrasts-gsm8k} and \ref{tab:contrasts-mmlu} give every paired difference
+from plain temperature sampling, including the two configurations that apply truncation before
+temperature scaling. An interval endpoint within $10^{-9}$ of zero counts as touching zero.
+The upper bound of Table~\ref{tab:bound} pools the four quantization levels of the main grid
+and is also given at Q8\_0 alone. A generalized estimating equation over the same records
+(identity link, item clusters, exchangeable working correlation) gives the same point
+estimates and intervals that differ by at most 0.6 points (median 0.1).
 
-\textbf{Order of temperature and truncation.} The two ablations are outside these families. Applying top-$p$ or min-$p$ before temperature
-scaling changes accuracy by at most 4 points on the seven main-grid models at $T \le 1.0$. The
-largest gain over plain temperature anywhere at $T \le 1.0$ is the temperature-last top-$p$ on
-Hermes-3 at 0.7 on MMLU-Pro, $+12.0$ [4.7, 19.3], one contrast among 48 ablation contrasts on
-the flagged models that otherwise stay within 7 points. On Llama-3.1 at 1.3, truncating first
-keeps 22 more points under top-$p$ on MMLU-Pro: at that temperature the rule cuts a sharper
-distribution and removes more of the tail (Appendix~\ref{app:sampler}).
 
-Tables~\ref{tab:grid-gsm8k} and \ref{tab:grid-mmlu} give the accuracy of every configuration at
-every temperature for the ten models with a sampler grid (main-grid models pooled over
-quantization levels; flagged models at Q8\_0). Tables~\ref{tab:contrasts-gsm8k} and \ref{tab:contrasts-mmlu} give every paired contrast
-against plain temperature, including the two temperature-last ablations; an interval endpoint
-within $10^{-9}$ of zero counts as touching zero. A generalized estimating equation over the
-same records (identity link, item clusters, exchangeable working correlation) gives the same
-point estimates and intervals that differ by at most 0.6 points (median 0.1).
-Figure~\ref{fig:gainloss} plots the gain of each rule against the loss of plain temperature
-relative to greedy decoding, 240 points over 60 combinations. The two quantities share the
-plain-temperature baseline, so the association is descriptive.
+\textbf{Order of temperature and truncation.} Applying top-$p$ or min-$p$ before temperature
+scaling, the llama.cpp default order, changes accuracy by at most 4 points on the seven
+main-grid models at temperatures 0.7 and 1.0. The largest gain over plain temperature sampling
+anywhere at those temperatures belongs to this order: top-$p$ applied first on Hermes-3 at 0.7
+on MMLU-Pro gains $+12.0$ [4.7, 19.3], one comparison among the 48 on the flagged models that
+otherwise stay within 7 points. On Llama-3.1 at 1.3, truncating first keeps 22 more points
+under top-$p$ on MMLU-Pro, because at that temperature the sampler sees a sharper distribution
+and removes more of the tail.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.9\columnwidth]{figA_gain_loss}
-\caption{Gain of each truncation rule over plain temperature against the loss of plain
-temperature relative to greedy decoding: 240 points, four rules in each of the 60 model, task,
-and temperature combinations with a sampler grid (Q8\_0). Both axes subtract the same
-plain-temperature accuracy. The diagonal marks full recovery to greedy accuracy.}
-\label{fig:gainloss}
-\end{figure}
+
+\textbf{Loss and gain across cells.} Figure~\ref{fig:gainloss} plots, for each of the 60
+combinations of model, task, and temperature with a sampler grid, the gain of each truncation
+sampler over plain temperature sampling against the loss of plain temperature sampling relative
+to greedy decoding. Larger losses accompany larger gains (Pearson $r{=}0.89$ over the 60
+best-sampler points and 0.78 over all 240 points). The two quantities share the
+plain-temperature baseline, and repeated generations, temperatures, and samplers are not
+independent observations, so the association is descriptive.
+
 
 \begin{table*}[p]\centering
-\caption{GSM8K accuracy (\%) by configuration and temperature (main-grid models pooled over quantization levels; the three flagged models at Q8\_0).}
+\caption{GSM8K accuracy (\%) by configuration and temperature (main-grid models pooled over
+quantization levels; the three flagged models at Q8\_0).}
 \label{tab:grid-gsm8k}
 \footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\textwidth}{!}{\input{tables/tab_grid_gsm8k}}
 \end{table*}
 \begin{table*}[p]\centering
-\caption{MMLU-Pro accuracy (\%) by configuration and temperature (main-grid models pooled over quantization levels; the three flagged models at Q8\_0).}
+\caption{MMLU-Pro accuracy (\%) by configuration and temperature (main-grid models pooled over
+quantization levels; the three flagged models at Q8\_0).}
 \label{tab:grid-mmlu}
 \footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\textwidth}{!}{\input{tables/tab_grid_mmlu_pro}}
 \end{table*}
 \begin{table*}[p]\centering
-\caption{GSM8K: paired accuracy difference of each configuration against plain temperature on
-the same items (pp, 95\% item-clustered bootstrap intervals; main-grid models pooled over
-quantization, flagged models at Q8\_0). Bold: interval above zero.}
+\caption{GSM8K: paired accuracy difference of each configuration against plain temperature
+sampling on the same items (pp, 95\% item-clustered bootstrap intervals; main-grid models
+pooled over quantization, flagged models at Q8\_0). Bold: interval above zero.}
 \label{tab:contrasts-gsm8k}
 \footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\textwidth}{!}{\input{tables/tab_contrasts_gsm8k}}
 \end{table*}
 \begin{table*}[p]\centering
 \caption{MMLU-Pro: paired accuracy difference of each configuration against plain temperature
-on the same items, as in Table~\ref{tab:contrasts-gsm8k}.}
+sampling on the same items, as in Table~\ref{tab:contrasts-gsm8k}.}
 \label{tab:contrasts-mmlu}
 \footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\textwidth}{!}{\input{tables/tab_contrasts_mmlu_pro}}
 \end{table*}
