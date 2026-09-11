@@ -34,7 +34,13 @@ CFG_TEX = {("greedy", "tfirst"): "greedy", ("temperature", "tfirst"): "temperatu
            ("top_p", "tlast"): "top-$p$ (temp.\\ last)", ("min_p", "tlast"): "min-$p$ (temp.\\ last)"}
 
 
+def nz(x):
+    """Round to one decimal and normalize negative zero so the tables never print -0.0."""
+    return round(float(x), 1) + 0.0
+
+
 def ci(pt, lo, hi, bold=False):
+    pt, lo, hi = nz(pt), nz(lo), nz(hi)
     s = f"${pt:+.1f}$ [{lo:.1f}, {hi:.1f}]"
     return f"$\\mathbf{{{pt:+.1f}}}$ [{lo:.1f}, {hi:.1f}]" if bold else s
 
@@ -155,7 +161,7 @@ def tab_quant_drops(df):
             for q in levels:
                 g = d[(d.model == m) & (d.task == task) & (d.quant == q) & (d.sampler == "temperature")]
                 pt, lo, hi = paired_boot(item_acc(g[g["T"] == 0.7]), item_acc(g[g["T"] == 1.3]))
-                cells.append(f"${pt:+.1f}$")
+                cells.append(f"${nz(pt):+.1f}$")
                 rec[f"{m}|{task}|{q}"] = pt
             lines.append(f"{LABEL[m] if i == 0 else ''} & {TASK_NAME[task]} & " + " & ".join(cells) + " \\\\")
     lines += ["\\bottomrule", "\\end{tabular}"]
