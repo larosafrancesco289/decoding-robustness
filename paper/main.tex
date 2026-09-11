@@ -247,16 +247,15 @@ two releases from 2026, added to test whether current models show the same patte
 OLMo-3-7B \citep{ai2025olmo3} is a fully open model. Appendix~\ref{app:repro} gives the model
 files, their hashes, and the llama.cpp builds.
 
-\textbf{Fragility flag.} The six additional models run the temperature test alone first. A
-model then receives the eight decoding configurations only if the test shows that it loses
-accuracy to temperature, because the sampler comparison on models that hold their accuracy is
-already covered by the main grid. We fixed the criterion before the four non-Llama models ran;
-the two Llama releases had run earlier, both meet it, and Llama-3.1-8B's grid stands for the
-family. A model qualifies when, between temperatures 0.7 and 1.3 under plain
-sampling, its accuracy falls by at least 15 points, its capped rate rises by at least 20 points,
-or its share of strict parses falls by at least 20 points, on either task. Three of the four
-qualified, Hermes-3, Qwen3.5-9B, and OLMo-3-7B, and each ran the eight configurations at
-Q8\_0.
+\textbf{Fragility flag.} Hermes-3, Qwen3.5-9B, Gemma-4-E4B, and OLMo-3-7B run the temperature
+test alone first. A model then receives the eight decoding configurations only if the test shows
+that it loses accuracy to temperature, because the sampler comparison on models that hold their
+accuracy is already covered by the main grid. We fixed the criterion before any of the four ran.
+A model qualifies when, between temperatures 0.7 and 1.3 under plain sampling, its accuracy
+falls by at least 15 points, its capped rate rises by at least 20 points, or its share of strict
+parses falls by at least 20 points, on either task. Three qualified, Hermes-3, Qwen3.5-9B, and
+OLMo-3-7B, and each ran the eight configurations at Q8\_0. The two further Llama releases run
+the temperature test only, because Llama-3.1-8B's grid already stands for the family.
 
 \textbf{Engine check.} Every result in the grid comes from llama.cpp on quantized weights, so a
 collapse could come from the engine or from the conversion of the weights. To check, we rerun
@@ -414,9 +413,9 @@ rank them.
 Figure~\ref{fig:ladder} extends the temperature to 2.0 on Llama-3.1-8B, Qwen2.5-7B, and
 Gemma-3-12B under plain sampling and three truncation samplers. A model has collapsed once its
 accuracy falls below half of what it was at 0.7, and the collapse temperature is the first
-tested temperature at which that happens. Under plain sampling Llama-3.1 collapses first on both
-tasks, Qwen2.5 and then Gemma-3 follow on GSM8K, and the two collapse at the same tested
-temperature on MMLU-Pro; each model collapses earlier on MMLU-Pro, the longer task, than on GSM8K. Truncation moves the collapse to a higher
+tested temperature at which that happens. Under plain sampling the three models collapse in the
+same order as in Figure~\ref{fig:drops}, Llama-3.1 first and Gemma-3 last, and each collapses
+earlier on MMLU-Pro, the longer task, than on GSM8K. Truncation moves the collapse to a higher
 temperature or removes it from the tested range. Top-$p$ delays it in half of the model and task
 combinations, min-$p$ delays it further, and top-$n\sigma$ does not collapse on any model or
 task through 2.0. Min-$p$ and top-$n\sigma$ were validated at temperatures of 1.5 to 3
@@ -722,8 +721,8 @@ strict-parse rates.
 \textbf{Quantization.} Table~\ref{tab:quant-drops} recomputes the drop at each quantization
 level of the main grid. Llama-3.1-8B collapses at every level, and no robust model loses more
 than 12 points at any level, so quantization does not change which models lose to temperature,
-in line with \citet{prasad2026quantization}; the size of the loss does move across levels, by
-up to 13 points on Mistral-7B's GSM8K row. Quantization itself costs little accuracy. From Q8\_0 to Q3\_K\_M, greedy accuracy pooled over both tasks changes by
+in line with \citet{prasad2026quantization}. Quantization itself costs little accuracy. From
+Q8\_0 to Q3\_K\_M, greedy accuracy pooled over both tasks changes by
 at most 5 points on the models of 7B parameters or more, and falls by 7 and 9 points on Qwen3-4B
 and Qwen3-1.7B.
 
