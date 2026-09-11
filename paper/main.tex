@@ -112,9 +112,9 @@ use. This work makes three contributions:
 
 \begin{itemize}
 \item \textbf{A controlled comparison of truncation samplers at the temperatures systems use.}
-Across thirteen open-weight models on GSM8K and MMLU-Pro, no truncation sampler improves on
-plain temperature sampling at 0.7 or 1.0, and an upper bound states how large a gain the
-results leave possible.
+On the robust models, no truncation sampler improves on plain temperature sampling at 0.7 or
+1.0 on GSM8K and MMLU-Pro, and an upper bound states how large a gain the results leave
+possible.
 \item \textbf{Temperature fragility as a property of the model.} Six of the thirteen models
 collapse between 1.0 and 1.3 into generations that run to the token limit or never state an
 answer. The collapse replicates across inference engine and precision. A different
