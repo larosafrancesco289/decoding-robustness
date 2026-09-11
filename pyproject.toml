@@ -1,7 +1,7 @@
 [project]
 name = "decoding-robustness"
 version = "0.1.0"
-description = "Do decoding-strategy benefits survive quantization? A cross-family, cross-quant study."
+description = "Temperature fragility and the conditional benefits of truncation sampling: a controlled decoding study on open-weight models."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -59,6 +59,10 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# One-off run and analysis scripts: kept as they ran for the paper; style rules relaxed.
+"scripts/*" = ["E501", "E702", "E731", "E741", "E402", "B905", "B007"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

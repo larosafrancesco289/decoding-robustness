@@ -41,4 +41,5 @@ with open(out / "blind.jsonl", "w") as fb, open(out / "key.jsonl", "w") as fk:
                              "parse_method": r["parse_method"], "cap": r["n_completion_tokens"] >= CAP[r["task"]] or r["n_completion_tokens"] == 0,
                              "correct": r["correct"], "gold": r["gold"], "parsed_answer": r["parsed_answer"], "id": r["id"]}) + "\n")
 from collections import Counter
+
 print(len(sample), "records;", Counter((r["model"].split("-")[0], r["temperature"], "cap" if (r["n_completion_tokens"] >= CAP[r["task"]] or r["n_completion_tokens"] == 0) else r["parse_method"]) for r in sample))

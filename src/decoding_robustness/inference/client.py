@@ -20,7 +20,9 @@ import httpx
 _PARSE_ERROR_RE = re.compile(r"Failed to parse input at pos \d+:\s?(.*)", re.S)
 # llama.cpp v0.4.0 (tag, 2026-09-04) rejects the same streams with this message and no text:
 # its PEG output parser fails on the invalid UTF-8 a cap-length degenerate stream ends in.
-_FORMAT_ERROR_RE = re.compile(r"The model produced output that does not match the expected .* format")
+_FORMAT_ERROR_RE = re.compile(
+    r"The model produced output that does not match the expected .* format"
+)
 
 
 @dataclass

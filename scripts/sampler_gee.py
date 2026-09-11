@@ -21,7 +21,6 @@ import warnings
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
-import statsmodels.formula.api as smf
 
 ARMS = ["top_p_top_p0.95", "top_k_top_k40", "min_p_min_p0.05", "top_n_sigma_top_n_sigma1.0"]
 SHORT = {"top_p_top_p0.95": "top-p", "top_k_top_k40": "top-k", "min_p_min_p0.05": "min-p",

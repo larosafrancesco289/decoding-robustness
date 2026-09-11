@@ -1,70 +1,73 @@
 # decoding-robustness
 
-**Temperature kills models, not answers: decoding robustness is a model property.**
+Code, configurations, and every generation record for the paper
+**Temperature Fragility and the Conditional Benefits of Truncation Sampling**
+(Francesco La Rosa, 2026; source in [`paper/`](paper/)).
 
-A single-pipeline factorial study of decoding strategies on small open-weight LLMs:
-seven instruction-tuned models from five families (1.7B-12B), 4 GGUF quantization levels
-plus a BF16 anchor, 8 sampler arms, temperatures 0.7-2.0, GSM8K and MMLU-Pro, plus a
-temperature-only cell on two more Llama generations; about 204,000 graded generations on
-commodity GPUs. Paper source in [`paper/`](paper/).
+## What the study does
 
-## Findings (paper section in parentheses)
+Thirteen open-weight instruction-tuned models (1.7B to 12B) answer 50 GSM8K and 50 MMLU-Pro
+items at temperatures 0.7, 1.0, and 1.3 in one controlled llama.cpp pipeline, with the same
+prompts, parsers, and token budgets for every model. Ten of the models also run eight decoding
+configurations: greedy, plain temperature sampling, top-p, top-k, min-p, top-nσ, and two
+order variants that apply truncation before temperature. Seven of the models run at four
+quantization levels. Three models run a temperature sweep to 2.0 under every sampler.
+The study totals 232,700 graded generations, all of which are in [`results/`](results/).
 
-- **At deployment temperatures the sampler barely matters; the model is the variable.**
-  Under plain temperature at T=1.3 the Llama family collapses: Llama-3.1-8B loses
-  34-41pp, Llama-3.2-3B collapses the same way, and Llama-3-8B loses 17pp on MMLU-Pro.
-  Every model outside the family stays within 8pp (4.1-4.2).
-- **The collapse is degeneration, not wrong answers.** Accuracy conditional on a
-  well-formed answer is flat in temperature; what collapses is termination. Standard
-  parsers disguise this (GSM8K as wrong answers, MMLU-Pro as parse failure) (4.3).
-- **Every model has a cliff; robustness is the cliff's location.** A T=1.3-2.0 ladder
-  shows a staircase (Llama by 1.5, Qwen2.5 by 1.7, Gemma-3 by 2.0 on GSM8K); truncation
-  samplers shift the cliff right by tail-cutting strength; sampler gains are real but
-  live past every model's deployment range (4.4).
-- **Quantization does not cause the collapse and does not reorder samplers** (Q8 to Q3;
-  the effect grows as models shrink) (4.5).
-- **Mechanism:** greedy-path uncertainty ranks with fragility (Spearman +0.96), and a
-  forced-token perturbation isolates the difference: one off-distribution token in
-  context multiplies the fragile model's chance of drawing the next one (2.3x, against
-  at most 1.35x for robust models), so derailment is self-reinforcing (4.6).
+## What it finds
+
+- **Temperature sensitivity differs by model.** Between 0.7 and 1.3, six of the thirteen
+  models lose 17 to 38 accuracy points on MMLU-Pro under plain sampling; the other seven lose
+  at most 10. The collapse replicates when a fragile model is served by HF Transformers in
+  BF16, and a different post-training of the same base model (Hermes-3 vs Llama-3.1-8B)
+  halves it.
+- **The lost accuracy is degenerate output.** On the fragile models the share of generations
+  that run to the token limit or never state an answer rises by 26 to 78 points, while the
+  share that states a wrong answer does not rise.
+- **No sampler gains where accuracy holds.** On the robust models, no truncation sampler
+  improves on plain temperature sampling at 0.7 or 1.0, and a jointly resampled upper bound
+  states how large a gain the data leave possible.
+- **Truncation recovers accuracy on the collapse.** On the fragile models every truncation
+  sampler improves accuracy at 1.3, and in the sweep truncation delays or prevents the collapse
+  up to 2.0. The gains reported for truncation samplers are recoveries from a collapse that
+  only some models suffer, at temperatures above the ones systems use.
 
 ## Reproduce
 
-See [`docs/REPRODUCING.md`](docs/REPRODUCING.md) for the full paper-to-script map
-(every figure, table, and in-text number). The short version:
+[`docs/REPRODUCING.md`](docs/REPRODUCING.md) maps every figure and table in the paper to the
+script and records that produce it. The analysis runs on CPU from the tracked records:
 
 ```bash
-uv sync                                          # env
-CUDA_ARCH=120 scripts/build_llamacpp.sh          # pin llama.cpp (sm_120 = RTX 5070 Ti)
-export LLAMA_SERVER_BIN=$PWD/vendor/llama.cpp/build/bin/llama-server
-uv run python scripts/fetch_models.py --config configs/full_matrix.yaml   # GGUFs + SHA256
-uv run python scripts/run_pilot.py --config configs/full_matrix.yaml      # the matrix
-uv run python scripts/gen_tables.py              # paper/tables/*.tex
-uv run python scripts/make_figures.py            # figures/*.pdf  (uv sync --extra figures)
-cd paper && tectonic main.tex                    # the PDF
+uv sync --extra figures
+uv run python scripts/paper_data.py       # results/paper_records.parquet (one row per generation)
+uv run python scripts/paper_figures.py    # figures/*.pdf
+uv run python scripts/paper_tables.py     # paper/tables/*.tex + results/paper_numbers.json
+cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main
 ```
 
+Regenerating the records needs a GPU with 16 GB, a pinned llama.cpp build
+(`scripts/build_llamacpp.sh`; commit `5aba5364` for the main grid, release v0.4.0 for the
+2026 models), and the model files listed with SHA-256 hashes in [`DOWNLOADS.md`](DOWNLOADS.md).
 Every generation is one resumable JSONL record keyed by
-`model|quant|sampler|temperature|task|item|repetition`, with the rendered-prompt SHA256,
-seed, parse path, and throughput logged. Quantized checkpoints are Bartowski imatrix
-GGUFs with pinned SHA256 hashes ([`DOWNLOADS.md`](DOWNLOADS.md)).
+`model|quant|sampler|temperature|task|item|repetition`, with the rendered-prompt hash, seed,
+parse outcome, and token counts logged.
 
 ## Layout
 
 ```
-src/decoding_robustness/   # the package
-  config/            # Pydantic experiment-config schema + YAML loader
-  inference/         # llama-server client + lifecycle
-  tasks/             # dataset loaders, answer parsers, graders
-  runner/            # factorial matrix expansion + resumable generation loop
-  analysis/          # bootstrap stats + analysis entry points
-configs/             # YAML experiment configs (validated against the schema)
-scripts/             # run/analysis scripts (see docs/REPRODUCING.md)
-results/             # JSONL shards per study arm
-paper/               # LaTeX master, references, auto-generated tables
-figures/             # generated figures
-tests/               # unit tests
-docs/                # reproducing guide
+src/decoding_robustness/   the package
+  config/                  Pydantic experiment-config schema and YAML loader
+  inference/               llama-server client, chat-template rendering, sampler parameters
+  tasks/                   dataset loaders, answer parsers, graders
+  runner/                  factorial matrix expansion and the resumable generation loop
+  analysis/                bootstrap statistics and table helpers
+configs/                   YAML experiment configs, one per run
+scripts/                   run scripts (GPU) and analysis scripts (CPU); see docs/REPRODUCING.md
+results/                   JSONL records per run, the flat parquet table, audit labels
+paper/                     LaTeX source, references, generated tables
+figures/                   generated figures
+tests/                     unit tests for the package
+docs/                      reproducing guide
 ```
 
 ## Dev
@@ -73,3 +76,5 @@ docs/                # reproducing guide
 uv run pytest -q        # tests
 uv run ruff check .     # lint
 ```
+
+MIT license.

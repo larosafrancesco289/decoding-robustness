@@ -51,7 +51,10 @@ def test_recovers_v040_format_error_500_as_zero_token_record():
         {
             "error": {
                 "code": 500,
-                "message": "The model produced output that does not match the expected Content-only format",
+                "message": (
+                    "The model produced output that does not match the expected "
+                    "Content-only format"
+                ),
                 "type": "server_error",
             }
         },

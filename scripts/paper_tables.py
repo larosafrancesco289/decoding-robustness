@@ -16,11 +16,21 @@ import json
 import sys
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 sys.path.insert(0, "scripts")
-from paper_figures import LABEL, RULES, TASK_NAME, TASKS, drops, item_acc, load, model_order, paired_boot, temp_slice  # noqa: E402
+from paper_figures import (  # noqa: E402
+    LABEL,
+    RULES,
+    TASK_NAME,
+    TASKS,
+    drops,
+    item_acc,
+    load,
+    model_order,
+    paired_boot,
+    temp_slice,
+)
 
 OUT = Path("paper/tables")
 TOL = 1e-9

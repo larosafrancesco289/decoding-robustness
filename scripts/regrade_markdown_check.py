@@ -16,8 +16,12 @@ import sys
 from collections import defaultdict
 
 sys.path.insert(0, "src")
-from decoding_robustness.tasks.parsers import _NUMBER, normalize_number  # noqa: E402
-from decoding_robustness.tasks.parsers import parse_gsm8k_numeric, parse_mmlu_pro_letter  # noqa: E402
+from decoding_robustness.tasks.parsers import (  # noqa: E402  # noqa: E402
+    _NUMBER,
+    normalize_number,
+    parse_gsm8k_numeric,
+    parse_mmlu_pro_letter,
+)
 
 _EMPH = r"[\*_\s]*"
 LET = re.compile(r"answer\s+is\s*:?\s*" + _EMPH + r"\(?\s*" + _EMPH + r"([A-Za-z])\s*" + _EMPH + r"\)?", re.I)

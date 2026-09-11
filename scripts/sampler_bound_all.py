@@ -10,7 +10,6 @@ comparisons (items resampled jointly per task). Writes results/sampler_bound_all
 from __future__ import annotations
 
 import json
-import sys
 
 import numpy as np
 import pandas as pd

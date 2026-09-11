@@ -40,7 +40,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from decoding_robustness.config.loader import load_experiment_config  # noqa: E402
 from decoding_robustness.inference.templating import ChatTemplate, prompt_sha256  # noqa: E402
-from decoding_robustness.runner.records import GenerationRecord, RecordStore, make_record_id  # noqa: E402
+from decoding_robustness.runner.records import (  # noqa: E402
+    GenerationRecord,
+    RecordStore,
+    make_record_id,
+)
 from decoding_robustness.seeding import derive_seed  # noqa: E402
 from decoding_robustness.tasks.grading import grade  # noqa: E402
 from decoding_robustness.tasks.loaders import load_task  # noqa: E402
@@ -196,7 +200,7 @@ def main() -> None:
                         correct=g.correct, n_prompt_tokens=int((enc["attention_mask"][bi] == 1).sum()),
                         n_completion_tokens=len(comp_list), latency_s=latency,
                         tokens_per_second=None, stopped=stopped, server_commit=engine_tag,
-                        timestamp=dt.datetime.now(dt.timezone.utc).isoformat(),
+                        timestamp=dt.datetime.now(dt.UTC).isoformat(),
                     )
                     store.append(rec)
                 print(f"  batch {start // args.batch_size + 1}: {latency:.1f}s")
