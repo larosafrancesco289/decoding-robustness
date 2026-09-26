@@ -23,6 +23,8 @@
 \renewcommand{\topfraction}{0.95}
 \renewcommand{\textfraction}{0.05}
 \renewcommand{\floatpagefraction}{0.85}
+% Float pages stack from the top instead of centring (visual pass 2026-09-26).
+\makeatletter\setlength{\@fptop}{0pt}\setlength{\@fpsep}{\floatsep}\makeatother
 \graphicspath{{../../figures/}}
 
 \title{Temperature Fragility and the Conditional Benefits of\\ Truncation Sampling}
@@ -585,7 +587,7 @@ recurs, and Llama-3.1's GSM8K drop is 13 points larger in 8-bit weights than at 
 \caption{Engine, precision, and build checks: plain-temperature accuracy at $T{=}0.7$ and
 $1.3$, the drop with its 95\% item-clustered interval, the capped rate at 1.3 (\%), and the
 difference of the drop from the reference Q8\_0 llama.cpp cell on the same items (positive: a
-larger drop than the reference). The BF16 GGUF row of Qwen3-4B belongs to the main grid.}
+larger drop than the reference). Transf.: Hugging Face Transformers; every llama.cpp row runs a GGUF file. The BF16 llama.cpp row of Qwen3-4B belongs to the main grid.}
 \label{tab:engine-full}
 \scriptsize\setlength{\tabcolsep}{2.5pt}\adjustbox{max width=\textwidth}{\input{tables/tab_engine_full}}
 \end{table}
@@ -751,19 +753,18 @@ sorted as in Figure~\ref{fig:drops}.}
 \footnotesize\setlength{\tabcolsep}{4pt}\input{tables/tab_temp_full}
 \end{table}
 
-\begin{table}[t]
-\begin{minipage}[t]{0.46\textwidth}\centering
+\begin{table}[t]\centering
 \caption{Plain-temperature accuracy drop from $T{=}0.7$ to $1.3$ (pp, point estimates) at each
 quantization level of the main grid (150 generations per cell).}
 \label{tab:quant-drops}
-\footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\linewidth}{!}{\input{tables/tab_quant_drops}}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.5\textwidth}\centering
+\footnotesize\setlength{\tabcolsep}{4pt}\input{tables/tab_quant_drops}
+\end{table}
+
+\begin{table}[t]\centering
 \caption{Stratified MMLU-Pro subset against the fixed business subset: plain-temperature
 accuracy at Q8\_0 and the drop with its interval.}
 \label{tab:strat}
-\footnotesize\setlength{\tabcolsep}{4pt}\resizebox{\linewidth}{!}{\input{tables/tab_strat}}
-\end{minipage}
+\footnotesize\setlength{\tabcolsep}{4pt}\input{tables/tab_strat}
 \end{table}
 
 \section{Temperature sweep}
