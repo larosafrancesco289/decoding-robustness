@@ -49,3 +49,9 @@ paper/backup-*/
 # session scratch (reviews, plans, research notes) and latex aux
 /tmp/
 /paper/main.out
+# TMLR build artifacts
+paper/tmlr/*.aux
+paper/tmlr/*.blg
+paper/tmlr/*.bbl
+paper/tmlr/*.log
+paper/tmlr/*.out
