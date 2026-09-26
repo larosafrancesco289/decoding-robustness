@@ -2,7 +2,7 @@
 
 Code, configurations, and every generation record for the paper
 **Temperature Fragility and the Conditional Benefits of Truncation Sampling**
-(Francesco La Rosa, 2026; [arXiv:2609.15476](https://arxiv.org/abs/2609.15476); source in [`paper/`](paper/)).
+(anonymous submission; LaTeX source in [`paper/tmlr/`](paper/tmlr/)).
 
 ## What the study does
 
@@ -78,15 +78,3 @@ uv run ruff check .     # lint
 ```
 
 MIT license.
-
-## Citation
-
-```bibtex
-@article{larosa2026temperature,
-  title   = {Temperature Fragility and the Conditional Benefits of Truncation Sampling},
-  author  = {La Rosa, Francesco},
-  journal = {arXiv preprint arXiv:2609.15476},
-  year    = {2026},
-  url     = {https://arxiv.org/abs/2609.15476}
-}
-```

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Engine/precision check, Sicily, 2026-09-06 morning run. Ordered by how much each arm can
+# Engine/precision check, GPU host, 2026-09-06 morning run. Ordered by how much each arm can
 # change the paper: (A) Llama-3.2-3B BF16 on transformers is the arm that could kill the
 # framing; (B) the same model as f16 GGUF on llama.cpp isolates engine from precision;
 # (C) Llama-3.1-8B int8 on transformers repeats the headline model off llama.cpp;

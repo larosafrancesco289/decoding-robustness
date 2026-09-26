@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Smoke test for the 2026 temperature sweep (run on Sicily after the GGUFs and the v0.4.0 build exist, GPU free):
+# Smoke test for the 2026 temperature sweep (run on the GPU host after the GGUFs and the v0.4.0 build exist, GPU free):
 # 2 items per task, greedy + T1.3, each of the four models through the NEW llama.cpp build, output to a scratch dir.
 # Checks: server starts, template renders, no <think>/<|think|> blocks (Gemma 4, Qwen3.5), greedy parses, CUDA output sane.
 set -uo pipefail

@@ -55,7 +55,7 @@ generation:
 server:
   host: 127.0.0.1
   port: 8080
-  llama_cpp_commit: 5266f24da75dc449bd56cbed7addb9c8e4a6a73e   # llama.cpp tag v0.4.0 (2026-09-04), verified with git rev-parse on Sicily
+  llama_cpp_commit: 5266f24da75dc449bd56cbed7addb9c8e4a6a73e   # llama.cpp tag v0.4.0 (2026-09-04), verified with git rev-parse on the GPU host
   n_ctx: 16384
   n_gpu_layers: -1
   parallel: 8

@@ -3,7 +3,7 @@
 # strict-parse fall >= 20 pp, on either task). Same decoding grid, tasks, item panels, seeds, K and
 # server settings as configs/full_matrix.yaml, on the v0.4.0 build the panel ran on. All four panel
 # checkpoints are listed so the run is selected with --only-model <flagged>; the others are skipped.
-# ~5 GPU-h per model on Sicily. Output results/panel_grid/<model>.jsonl (gen_tables.py / App A rows).
+# ~5 GPU-h per model on the GPU host. Output results/panel_grid/<model>.jsonl (gen_tables.py / App A rows).
 
 name: panel-grid-2026
 phase: panel_grid
@@ -88,7 +88,7 @@ generation:
 server:
   host: 127.0.0.1
   port: 8080
-  llama_cpp_commit: 5266f24da75dc449bd56cbed7addb9c8e4a6a73e   # llama.cpp tag v0.4.0 (2026-09-04), verified with git rev-parse on Sicily
+  llama_cpp_commit: 5266f24da75dc449bd56cbed7addb9c8e4a6a73e   # llama.cpp tag v0.4.0 (2026-09-04), verified with git rev-parse on the GPU host
   n_ctx: 16384
   n_gpu_layers: -1
   parallel: 8

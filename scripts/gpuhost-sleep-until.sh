@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # RETIRED 2026-09-05 night: he powers the box off instead of suspending (board ignores RTC alarms). Kept for reference.
-# Usage: scripts/sicily-sleep-until.sh 09:00     (default 09:00). NOTE: this board ignores RTC alarms in deep sleep (tested 2026-09-05); wake it with the power button. The alarm is kept in case firmware settings change.
+# Usage: scripts/gpuhost-sleep-until.sh 09:00     (default 09:00). NOTE: this board ignores RTC alarms in deep sleep (tested 2026-09-05); wake it with the power button. The alarm is kept in case firmware settings change.
 # The systemd sleep hook /etc/systemd/system-sleep/90-engine-check.sh consumes the flag on
 # resume and launches scripts/engine_check_20260906.sh in tmux session `engine`.
 set -euo pipefail

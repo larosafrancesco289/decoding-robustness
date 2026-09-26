@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 2026 panel temperature sweep + commit bridge, llama.cpp v0.4.0, Sicily. Run after scripts/sweep_smoke_20260906.sh
+# 2026 panel temperature sweep + commit bridge, llama.cpp v0.4.0, the GPU host. Run after scripts/sweep_smoke_20260906.sh
 # passed and the PLACEHOLDER commits in both configs were replaced. Resumable by record id. Order: bridge first
 # (cheapest, and it validates the new build against known cells), then Hermes-3 (old-arch model, most comparable),
 # then the three 2026 models.
