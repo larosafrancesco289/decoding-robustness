@@ -12,6 +12,7 @@
 \usepackage{array}
 \usepackage{graphicx}
 \usepackage{adjustbox}
+\usepackage{placeins}
 \usepackage{amsmath}
 \usepackage{xcolor}
 \usepackage{hyperref}
@@ -24,6 +25,7 @@
 \renewcommand{\textfraction}{0.05}
 \renewcommand{\floatpagefraction}{0.85}
 % Float pages stack from the top instead of centring (visual pass 2026-09-26).
+\setlength{\belowcaptionskip}{4pt}
 \makeatletter\setlength{\@fptop}{0pt}\setlength{\@fpsep}{\floatsep}\makeatother
 \graphicspath{{../../figures/}}
 
@@ -278,7 +280,7 @@ temperature sampling jointly and compute an upper confidence bound on the larges
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.85\textwidth]{fig1_drops}
+\includegraphics[width=0.95\textwidth]{fig1_drops}
 \caption{Accuracy drop under plain temperature sampling from $T{=}0.7$ to $1.3$ at Q8\_0, with
 95\% item-clustered bootstrap intervals; the accuracies at the two temperatures are printed at
 the right. Positive values are losses. Models are sorted by the MMLU-Pro drop; the six in orange above the
@@ -330,7 +332,7 @@ fragile models (Appendix~\ref{app:grading}).
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.5\textwidth]{fig2_outcomes}
+\includegraphics[width=0.62\textwidth]{fig2_outcomes}
 \caption{Outcome of every MMLU-Pro generation under plain temperature sampling at Q8\_0, three
 bars per model, top to bottom $T{=}0.7$, 1.0, and 1.3. Categories are exclusive, in this
 precedence: correct; capped or unparseable (so this category holds incorrect generations only);
@@ -396,7 +398,7 @@ Qwen3-8B, and Gemma-3-12B.}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.8\textwidth]{fig4_ladder}
+\includegraphics[width=0.88\textwidth]{fig4_ladder}
 \caption{Accuracy against temperature under four configurations at Q8\_0 (points at 0.7 and 1.0
 from the main grid, 1.3 to 2.0 from the temperature sweep). The dashed line marks half of the same
 model and task's plain-temperature accuracy at 0.7 in the main grid, the collapse criterion;
@@ -667,7 +669,7 @@ mid-generation, and continues as token noise until the budget.}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.5\textwidth]{figA_outcomes_gsm8k}
+\includegraphics[width=0.62\textwidth]{figA_outcomes_gsm8k}
 \caption{Outcome of every GSM8K generation under plain temperature sampling at Q8\_0, as in
 Figure~\ref{fig:outcomes}. On GSM8K a degenerate generation usually contains a number, so part
 of the degeneration is graded through the flexible path; the capped flag records it.}
@@ -782,6 +784,7 @@ $T{=}0.7$ accuracy in the main grid (pp, 95\% item-clustered intervals; Q8\_0).}
 \footnotesize\setlength{\tabcolsep}{6pt}\input{tables/tab_ladder}
 \end{table}
 
+\FloatBarrier
 \section{Sampler results in full}
 \label{app:sampler}
 
@@ -818,7 +821,7 @@ association is descriptive.
 
 \begin{figure}[p]
 \centering
-\includegraphics[width=0.45\textwidth]{figA_gain_loss}
+\includegraphics[width=0.55\textwidth]{figA_gain_loss}
 \caption{Gain of each truncation sampler over plain temperature sampling against the loss of
 plain temperature sampling relative to greedy decoding: 240 points, four samplers in each of
 the 60 combinations of model, task, and temperature with a sampler grid (Q8\_0). Both axes
